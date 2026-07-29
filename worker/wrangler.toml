@@ -1,0 +1,20 @@
+name = "99days-ai-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+[vars]
+ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
+DAILY_LIMIT = "50"
+# Set to your GitHub Pages origin (e.g. "https://yourname.github.io") once deployed,
+# or leave as "*" while developing.
+ALLOWED_ORIGIN = "*"
+
+# Rate limiting needs a KV namespace. Create one with:
+#   npx wrangler kv namespace create RATE_LIMIT
+# then replace the id below with the one it prints.
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# The real secret is never stored here. Set it with:
+#   npx wrangler secret put ANTHROPIC_API_KEY
