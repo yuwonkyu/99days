@@ -14,7 +14,7 @@ ALLOWED_ORIGIN = "*"
 # then replace the id below with the one it prints.
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "94a9ec9774c94aa99ffb227c8f2cd8e1"
 
 # The real secret is never stored here. Set it with:
 #   npx wrangler secret put ANTHROPIC_API_KEY
