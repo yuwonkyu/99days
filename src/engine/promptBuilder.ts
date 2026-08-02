@@ -1,6 +1,6 @@
 import { Character } from '../types/character';
 import { LegacyMention } from '../types/legacy';
-import { TurnContext } from '../types/game';
+import { StoryDirective, TurnContext } from '../types/game';
 
 // Kept verbatim in sync with docs/design/04-ai-gamemaster-prompt.md — update both together.
 export const SYSTEM_PROMPT = `당신은 텍스트 기반 생존 성장 시뮬레이션 게임의 진행자(게임마스터)입니다.
@@ -29,6 +29,11 @@ export const SYSTEM_PROMPT = `당신은 텍스트 기반 생존 성장 시뮬레
 - '운'이 개입했다면 납득 가능한가?
 - 분량 제한을 지켰는가? (불필요한 수식어·부연설명 생략)
 
+[진행 방향 안내 - turnContext.storyDirective 활용]
+- phase/phaseGuide: 지금이 99일 중 어떤 단계인지 알려줌. 그 방향에 맞게 사건의 무게를 조절할 것
+- sceneMode(외출/거처): "외출"이면 여정·순찰·사냥·교역·탐색처럼 밖으로 나가는 성격의 사건을, "거처"면 방어·은신·은폐·거주·피난처럼 머무는 성격의 사건을 자연스럽게 녹여낼 것 (단어를 그대로 쓰라는 뜻이 아니라 그 성격의 상황을 만들라는 뜻)
+- avoidRepeat가 true면 recentTags와 겹치지 않는 새로운 장소·인물·사건을 반드시 등장시킬 것
+
 [콘텐츠 가이드라인]
 - 폭력/죽음/상실 등 소설의 톤(건조한 현실주의)은 유지하되 과도하게 선정적이거나 자극적인 묘사는 피할 것
 - 미성년 캐릭터가 생성될 수 있으므로 연령에 부적절한 내용 생성 금지
@@ -48,6 +53,7 @@ export function buildTurnContext(params: {
   totalDays: number;
   recentDayLogs: string[];
   legacyMentions: LegacyMention[];
+  storyDirective: StoryDirective;
   chosenChoice?: string;
 }): TurnContext {
   return { ...params };
