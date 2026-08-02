@@ -14,6 +14,7 @@ import BackgroundScene from '../components/BackgroundScene';
 import DayProgressBar from '../components/DayProgressBar';
 import ChoiceList from '../components/ChoiceList';
 import ReturningSummaryBanner from '../components/ReturningSummaryBanner';
+import StatChangeBadges from '../components/StatChangeBadges';
 import StatusPanel from './StatusPanel';
 
 interface Props {
@@ -83,6 +84,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       currentSituation: response.situation,
       currentChoices: response.choices,
       lastOutcome: undefined,
+      lastStatChanges: undefined,
       lastPlayedAt: Date.now(),
       isEnded: false,
     };
@@ -148,6 +150,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       currentSituation: response.situation,
       currentChoices: response.choices,
       lastOutcome: response.outcome,
+      lastStatChanges: response.stat_changes,
       lastPlayedAt: Date.now(),
       isEnded: false,
     };
@@ -208,7 +211,12 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
 
         <ScrollView contentContainerStyle={styles.panelScroll}>
           <View style={styles.panel}>
-            {gameState.lastOutcome && <Text style={styles.outcomeText}>{gameState.lastOutcome}</Text>}
+            {gameState.lastOutcome && (
+              <>
+                <Text style={styles.outcomeText}>{gameState.lastOutcome}</Text>
+                <StatChangeBadges delta={gameState.lastStatChanges} />
+              </>
+            )}
             <Text style={styles.situationText}>{gameState.currentSituation}</Text>
 
             {loading ? (
