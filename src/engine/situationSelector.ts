@@ -98,6 +98,14 @@ export interface SelectionContext {
   luk: number;
   phase: string;
   linkedTier?: OutcomeTier;
+  /** Doc 04: "한번 나온 상황은 안 나왔으면" — 이미 본 시드 id는 (다 보기 전까지) 후보에서 제외한다. */
+  excludeIds?: Set<string>;
+}
+
+export interface WeightedSeedResult {
+  seed: SituationSeed;
+  /** true면 이 모드의 시드를 전부 본 상태라 순환을 리셋했다는 신호 — 호출자가 usedSeedIds를 새로 시작해야 함. */
+  wasReset: boolean;
 }
 
 function weightSeed(seed: SituationSeed, ctx: SelectionContext): number {
@@ -140,17 +148,22 @@ function weightSeed(seed: SituationSeed, ctx: SelectionContext): number {
   return Math.max(weight, 0.05);
 }
 
-export function pickWeightedSeed(ctx: SelectionContext): SituationSeed {
+export function pickWeightedSeed(ctx: SelectionContext): WeightedSeedResult {
   const seeds = buildSituationSeeds(ctx.seedCtx);
-  const pool = seeds.filter((s) => s.mode === ctx.sceneMode);
-  const candidates = pool.length > 0 ? pool : seeds;
+  const modePool = seeds.filter((s) => s.mode === ctx.sceneMode);
+  const basePool = modePool.length > 0 ? modePool : seeds;
+
+  const exclude = ctx.excludeIds ?? new Set<string>();
+  const unseenPool = basePool.filter((s) => !exclude.has(s.id));
+  const wasReset = unseenPool.length === 0;
+  const candidates = wasReset ? basePool : unseenPool;
 
   const weights = candidates.map((seed) => weightSeed(seed, ctx));
   const total = weights.reduce((a, b) => a + b, 0);
   let roll = Math.random() * total;
   for (let i = 0; i < candidates.length; i++) {
     roll -= weights[i];
-    if (roll <= 0) return candidates[i];
+    if (roll <= 0) return { seed: candidates[i], wasReset };
   }
-  return candidates[candidates.length - 1];
+  return { seed: candidates[candidates.length - 1], wasReset };
 }

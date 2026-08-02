@@ -73,7 +73,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       legacyMentions,
       storyDirective,
     });
-    const { response, source } = await getNextTurn(context);
+    const { response, source, usedSeedId } = await getNextTurn(context, []);
     setLastSource(source);
 
     const newState: GameState = {
@@ -81,6 +81,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       day: 1,
       dayLogs: [],
       recentSceneModes: [storyDirective.sceneMode],
+      usedSeedIds: usedSeedId ? [usedSeedId] : [],
       currentSituation: response.situation,
       currentChoices: response.choices,
       lastOutcome: undefined,
@@ -124,12 +125,17 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       chosenChoice,
     });
 
-    const { response, source } = await getNextTurn(context);
+    const { response, source, usedSeedId, resetUsedSeeds } = await getNextTurn(context, gameState.usedSeedIds ?? []);
     setLastSource(source);
 
     const updatedCharacter = applyStatDelta(gameState.character, response.stat_changes);
     const newDayLogs = [...gameState.dayLogs, response.day_summary];
     const newSceneModes = [...(gameState.recentSceneModes ?? []), storyDirective.sceneMode].slice(-6);
+    const newUsedSeedIds = usedSeedId
+      ? resetUsedSeeds
+        ? [usedSeedId]
+        : [...(gameState.usedSeedIds ?? []), usedSeedId]
+      : gameState.usedSeedIds ?? [];
 
     if (updatedCharacter.hp <= 0) {
       const text = pickEndingText({ type: 'death', recentDayLogs: newDayLogs.slice(-3) });
@@ -147,6 +153,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       day: gameState.day + 1,
       dayLogs: newDayLogs,
       recentSceneModes: newSceneModes,
+      usedSeedIds: newUsedSeedIds,
       currentSituation: response.situation,
       currentChoices: response.choices,
       lastOutcome: response.outcome,

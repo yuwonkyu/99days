@@ -62,6 +62,8 @@ export interface GameState {
   day: number;
   dayLogs: string[];
   recentSceneModes: SceneMode[];
+  /** Doc 04: 오프라인 폴백이 이미 보여준 시드 id 목록 — 다 보기 전까진 반복 안 되게 제외에 쓴다. */
+  usedSeedIds: string[];
   currentSituation: string;
   currentChoices: string[];
   lastOutcome?: string;
