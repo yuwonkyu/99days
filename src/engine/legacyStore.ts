@@ -46,7 +46,7 @@ export async function saveLegacyRecord(params: {
 }
 
 /** Doc 06: sample a few past characters to inject into the AI prompt as supporting cast. */
-export async function sampleLegacyMentions(count = 3): Promise<LegacyMention[]> {
+export async function sampleLegacyMentions(count = 2): Promise<LegacyMention[]> {
   const records = await getLegacyRecords();
   const shuffled = [...records].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count).map((r) => ({

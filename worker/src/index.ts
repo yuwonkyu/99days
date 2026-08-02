@@ -21,9 +21,10 @@ const SYSTEM_PROMPT = `당신은 텍스트 기반 생존 성장 시뮬레이션 
 
 [매 턴 생성 절차]
 1. 캐릭터 상태(스탯/나이/직업/체형/소지품/Day/이력 요약/과거 캐릭터 유산 목록)를 입력받음
-2. 상황 설명(2~4문장) 생성
-3. 선택지 2~4개 제시 (자유행동 여지도 허용)
-4. 선택 후: 현실적 결과 생성, 스탯 반영, 과도하게 유리한 결과 금지
+2. 상황 설명(2~4문장, 150자 이내) 생성
+3. 선택지 2~4개 제시 (각 25자 이내, 자유행동 여지도 허용)
+4. 선택 후: 현실적 결과(2~3문장, 120자 이내) 생성, 스탯 반영, 과도하게 유리한 결과 금지
+5. day_summary는 30자 이내 한 줄 요약
 
 [생성 후 자가 검증 체크리스트]
 - 세계관 위반 없는가?
@@ -31,6 +32,7 @@ const SYSTEM_PROMPT = `당신은 텍스트 기반 생존 성장 시뮬레이션 
 - 결과가 과도하게 유리하지 않은가?
 - 다른 인물도 주인공이 될 수 있는가? (조연 비중 확보)
 - '운'이 개입했다면 납득 가능한가?
+- 분량 제한을 지켰는가? (불필요한 수식어·부연설명 생략)
 
 [콘텐츠 가이드라인]
 - 폭력/죽음/상실 등 소설의 톤(건조한 현실주의)은 유지하되 과도하게 선정적이거나 자극적인 묘사는 피할 것
@@ -48,17 +50,17 @@ const TOOL_SCHEMA = {
   input_schema: {
     type: 'object',
     properties: {
-      situation: { type: 'string', description: '2~4문장의 현재 상황 설명' },
+      situation: { type: 'string', description: '2~4문장, 150자 이내의 현재 상황 설명' },
       choices: {
         type: 'array',
         items: { type: 'string' },
         minItems: 2,
         maxItems: 4,
-        description: '플레이어가 고를 수 있는 선택지 2~4개',
+        description: '플레이어가 고를 수 있는 선택지 2~4개 (각 25자 이내)',
       },
       outcome: {
         type: 'string',
-        description: '이전 선택의 결과 (Day 1 시작 상황에서는 생략 가능)',
+        description: '이전 선택의 결과, 2~3문장 120자 이내 (Day 1 시작 상황에서는 생략 가능)',
       },
       stat_changes: {
         type: 'object',
@@ -70,7 +72,7 @@ const TOOL_SCHEMA = {
           HP: { type: 'number' },
         },
       },
-      day_summary: { type: 'string', description: '복귀 시 요약용 한 줄' },
+      day_summary: { type: 'string', description: '30자 이내, 복귀 시 요약용 한 줄' },
     },
     required: ['situation', 'choices', 'stat_changes', 'day_summary'],
   },
@@ -120,7 +122,7 @@ async function callAnthropic(env: Env, turnContext: unknown): Promise<unknown> {
     },
     body: JSON.stringify({
       model: env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
-      max_tokens: 700,
+      max_tokens: 500,
       system: SYSTEM_PROMPT,
       messages: [
         {
