@@ -45,6 +45,26 @@ function pickSceneMode(recentModes: SceneMode[]): SceneMode {
   return Math.random() < 0.5 ? 'outdoor' : 'shelter';
 }
 
+/** Doc 04: "가끔 며칠~몇 년이 흘렀다" 식의 시간 압축 서술 — 매 Day가 문자 그대로 24시간일 필요는 없다. */
+const TIME_SKIP_OPTIONS: { label: string; weight: number }[] = [
+  { label: '며칠', weight: 5 },
+  { label: '몇 주', weight: 3 },
+  { label: '한두 달', weight: 1.5 },
+  { label: '반년 가까이', weight: 0.7 },
+  { label: '몇 년', weight: 0.3 },
+];
+
+function pickTimeSkip(day: number): { timeSkip: boolean; timeSkipLabel?: string } {
+  if (day <= 1 || Math.random() >= 0.12) return { timeSkip: false };
+  const total = TIME_SKIP_OPTIONS.reduce((sum, o) => sum + o.weight, 0);
+  let roll = Math.random() * total;
+  for (const option of TIME_SKIP_OPTIONS) {
+    roll -= option.weight;
+    if (roll <= 0) return { timeSkip: true, timeSkipLabel: option.label };
+  }
+  return { timeSkip: true, timeSkipLabel: TIME_SKIP_OPTIONS[0].label };
+}
+
 export function buildStoryDirective(params: {
   day: number;
   totalDays: number;
@@ -57,6 +77,7 @@ export function buildStoryDirective(params: {
   const tagCounts = new Map<string, number>();
   recentTags.forEach((tag) => tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1));
   const avoidRepeat = [...tagCounts.values()].some((count) => count >= 2);
+  const { timeSkip, timeSkipLabel } = pickTimeSkip(params.day);
 
   return {
     phase: phase.label,
@@ -66,5 +87,7 @@ export function buildStoryDirective(params: {
     sceneTags: sample(SCENE_TAGS[sceneMode], 2),
     recentTags,
     avoidRepeat,
+    timeSkip,
+    timeSkipLabel,
   };
 }

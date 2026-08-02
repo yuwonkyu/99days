@@ -4,11 +4,12 @@ import { eunNeun, iGa, eulReul } from '../engine/korean';
 /**
  * Doc 04: offline fallback content library. Instead of one static paragraph per
  * "situation", each seed is a small function that can pick from flavor-word
- * banks — so 36 hand-authored seeds render as well over 100 distinct outputs,
+ * banks — so 40 hand-authored seeds render as well over 100 distinct outputs,
  * and adding more banks/seeds over time scales toward the long-term 999 goal
- * without needing 999 hand-written paragraphs.
+ * without needing 999 hand-written paragraphs. `bond` covers positive-emotion
+ * beats (affection/friendship) alongside the conflict-leaning categories.
  */
-export type SituationCategory = 'danger' | 'work' | 'social' | 'mystery' | 'horror' | 'comedy';
+export type SituationCategory = 'danger' | 'work' | 'social' | 'mystery' | 'horror' | 'comedy' | 'bond';
 export type ChoiceLean = 'safe' | 'neutral' | 'risky';
 
 export interface SeedContext {
@@ -36,7 +37,7 @@ function pick<T>(arr: T[]): T {
 
 const STRANGERS = ['낯선 나그네', '떠돌이 상인', '말수 적은 노인', '몸을 사리는 청년', '수상한 사내'];
 const THREATS = ['도적 무리', '굶주린 들짐승', '정체 모를 그림자', '흉흉한 소문의 장본인', '낫을 든 사내'];
-const OMENS = ['까마귀 떼', '핏자국', '깨진 부적', '타다 만 편지', '이상하리만치 조용한 골목'];
+const OMENS = ['까마귀 떼', '핏자국', '깨진 부적', '타다 만 편지', '부러진 화살'];
 const NOISES = ['긁는 소리', '숨죽인 발소리', '희미한 신음', '금속이 부딪히는 소리', '알 수 없는 웃음소리'];
 const TIME_MOODS = ['이른 아침', '해 질 무렵', '비 오는 오후', '유난히 조용한 오전', '바람이 매섭게 부는 밤'];
 
@@ -464,6 +465,54 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
         { text: '고칠 수 있을지 살펴본다', lean: 'neutral' },
         { text: '별일 아니라며 웃어넘긴다', lean: 'safe' },
         { text: '어제 일을 하나하나 되짚어본다', lean: 'risky' },
+      ],
+    },
+
+    // OUTDOOR × bond (호감/우정/애정 — 위험·갈등만이 아니라 긍정적 관계 감정도)
+    {
+      id: 'od-bond-1',
+      mode: 'outdoor',
+      category: 'bond',
+      situation: `${pick(TIME_MOODS)}, 장터에서 몇 번 마주친 ${pick(STRANGERS)}와 이야기를 나누다 보니 어느새 편해진 사이가 되어간다.`,
+      choices: [
+        { text: '먼저 다음에 또 보자고 청한다', lean: 'risky' },
+        { text: '적당한 거리를 두며 대화를 이어간다', lean: 'neutral' },
+        { text: '가볍게 인사만 하고 지나간다', lean: 'safe' },
+      ],
+    },
+    {
+      id: 'od-bond-2',
+      mode: 'outdoor',
+      category: 'bond',
+      situation: `길에서 곤경에 처한 이를 도와준 인연으로, 그 사람이 ${personality} ${name}에게 은근한 호감을 내비친다.`,
+      choices: [
+        { text: '마음을 솔직히 표현해본다', lean: 'risky' },
+        { text: '천천히 시간을 두고 지켜본다', lean: 'neutral' },
+        { text: '부담스러워 거리를 둔다', lean: 'safe' },
+      ],
+    },
+
+    // SHELTER × bond
+    {
+      id: 'sh-bond-1',
+      mode: 'shelter',
+      category: 'bond',
+      situation: `${pick(TIME_MOODS)}, 함께 지내는 이가 평소와 달리 유독 다정하게 말을 건넨다. ${personality} ${name}${은는} 묘하게 마음이 쓰인다.`,
+      choices: [
+        { text: '마음을 열고 다가가 본다', lean: 'risky' },
+        { text: '내색하지 않고 지켜본다', lean: 'neutral' },
+        { text: '어색해서 화제를 돌린다', lean: 'safe' },
+      ],
+    },
+    {
+      id: 'sh-bond-2',
+      mode: 'shelter',
+      category: 'bond',
+      situation: `요즘 이웃이 부쩍 자주 거처에 들른다. 단순한 친절 이상의 마음이 느껴져 ${name}${은는} 내심 신경이 쓰인다.`,
+      choices: [
+        { text: '차를 대접하며 이야기를 나눈다', lean: 'neutral' },
+        { text: '넌지시 마음을 떠본다', lean: 'risky' },
+        { text: '적당히 예의만 차리고 만다', lean: 'safe' },
       ],
     },
   ];

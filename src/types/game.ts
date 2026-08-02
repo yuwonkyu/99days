@@ -9,6 +9,8 @@ export interface StatDelta {
   AGI?: number;
   LUK?: number;
   HP?: number;
+  /** 시간 압축 서술(storyDirective.timeSkip)로 여러 해가 흐른 경우에만 채워짐. */
+  AGE?: number;
 }
 
 /**
@@ -40,6 +42,9 @@ export interface StoryDirective {
   sceneTags: string[];
   recentTags: string[];
   avoidRepeat: boolean;
+  /** true면 이번 턴은 전날 바로 다음이 아니라 timeSkipLabel만큼 시간이 압축되어 흐른 것으로 서술한다. */
+  timeSkip: boolean;
+  timeSkipLabel?: string;
 }
 
 export interface TurnContext {
