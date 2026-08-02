@@ -65,6 +65,8 @@ export interface GameState {
   currentSituation: string;
   currentChoices: string[];
   lastOutcome?: string;
+  /** 방금 해소된 선택의 스탯 변화 — UI에 변화량 뱃지로 표시하기 위해 별도 보관 (Doc 04). */
+  lastStatChanges?: StatDelta;
   lastReturnSummary?: string;
   lastPlayedAt: number;
   isEnded: boolean;

@@ -39,7 +39,7 @@ const STRANGERS = ['낯선 나그네', '떠돌이 상인', '말수 적은 노인
 const THREATS = ['도적 무리', '굶주린 들짐승', '정체 모를 그림자', '흉흉한 소문의 장본인', '낫을 든 사내'];
 const OMENS = ['까마귀 떼', '핏자국', '깨진 부적', '타다 만 편지', '부러진 화살'];
 const NOISES = ['긁는 소리', '숨죽인 발소리', '희미한 신음', '금속이 부딪히는 소리', '알 수 없는 웃음소리'];
-const TIME_MOODS = ['이른 아침', '해 질 무렵', '비 오는 오후', '유난히 조용한 오전', '바람이 매섭게 부는 밤'];
+export const TIME_MOODS = ['이른 아침', '해 질 무렵', '비 오는 오후', '유난히 조용한 오전', '바람이 매섭게 부는 밤'];
 
 /** Doc 04: 12 buckets (mode × category) × 3 seeds each = 36 authored, well over 100 combined renders. */
 export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {

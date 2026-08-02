@@ -34,21 +34,36 @@ export function inferCategory(text: string): SituationCategory | null {
 const RISKY_KEYWORDS = ['맞선다', '맞서', '정면', '따라간다', '다가가', '뛰어든다', '캐묻', '살펴본다', '확인한다', '쫓아다니'];
 const SAFE_KEYWORDS = ['피한다', '물러선다', '숨', '지켜본다', '되돌아간다', '거절', '넘긴다', '기다린다', '무시하고'];
 
+export interface ChoiceMeta {
+  lean: ChoiceLean;
+  category: SituationCategory;
+}
+
+/**
+ * Doc 04: "발자국을 조사하고 어떻게 끝난 건지 모르겠다" 피드백 — 결과 문구를 그 선택이 나온
+ * 시드의 카테고리에 맞게 고르려면, 어느 시드에서 나온 선택지였는지 역추적할 수 있어야 한다.
+ * 선택지 문구는 시드마다 사실상 유일하므로 exact-match로 안정적으로 복원 가능하다.
+ */
+export function buildKnownChoiceMeta(seedCtx: SeedContext): Map<string, ChoiceMeta> {
+  const map = new Map<string, ChoiceMeta>();
+  buildSituationSeeds(seedCtx).forEach((seed) => {
+    seed.choices.forEach((choice) => map.set(choice.text, { lean: choice.lean, category: seed.category }));
+  });
+  return map;
+}
+
 /** Exact-match against the known choice bank first (reliable); keyword guess as fallback for AI-authored text. */
-export function inferChoiceLean(text: string, knownLeans: Map<string, ChoiceLean>): ChoiceLean {
-  const known = knownLeans.get(text);
-  if (known) return known;
+export function inferChoiceLean(text: string, knownMeta: Map<string, ChoiceMeta>): ChoiceLean {
+  const known = knownMeta.get(text);
+  if (known) return known.lean;
   if (RISKY_KEYWORDS.some((w) => text.includes(w))) return 'risky';
   if (SAFE_KEYWORDS.some((w) => text.includes(w))) return 'safe';
   return 'neutral';
 }
 
-export function buildKnownChoiceLeans(seedCtx: SeedContext): Map<string, ChoiceLean> {
-  const map = new Map<string, ChoiceLean>();
-  buildSituationSeeds(seedCtx).forEach((seed) => {
-    seed.choices.forEach((choice) => map.set(choice.text, choice.lean));
-  });
-  return map;
+/** Only resolvable for choices that came from our own seed bank (AI-authored text falls back to null). */
+export function inferChoiceCategory(text: string, knownMeta: Map<string, ChoiceMeta>): SituationCategory | null {
+  return knownMeta.get(text)?.category ?? null;
 }
 
 const PERSONALITY_BIAS: Record<string, Partial<Record<SituationCategory, number>>> = {
