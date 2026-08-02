@@ -1,6 +1,7 @@
 import { AITurnResponse, TurnContext } from '../types/game';
 import { requestAiTurn, AiUnavailableError } from './aiClient';
 import { generateOfflineTurn } from './offlineGenerator';
+import { clampTurnResponse } from './textLimits';
 
 export type TurnSource = 'ai' | 'offline';
 
@@ -17,9 +18,9 @@ export interface TurnResult {
 export async function getNextTurn(context: TurnContext): Promise<TurnResult> {
   try {
     const response = await requestAiTurn(context);
-    return { response, source: 'ai' };
+    return { response: clampTurnResponse(response), source: 'ai' };
   } catch (err) {
     if (!(err instanceof AiUnavailableError)) throw err;
-    return { response: generateOfflineTurn(context), source: 'offline' };
+    return { response: clampTurnResponse(generateOfflineTurn(context)), source: 'offline' };
   }
 }

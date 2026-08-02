@@ -1,0 +1,136 @@
+import { JOBS, JobCategory } from '../data/jobs';
+import {
+  ChoiceLean,
+  SeedContext,
+  SituationCategory,
+  SituationSeed,
+  buildSituationSeeds,
+} from '../data/situationSeeds';
+import { OutcomeTier } from './statGen';
+import { SceneMode } from '../types/game';
+
+/**
+ * Doc 04: turns the 36 authored seeds into a character/history-aware weighted
+ * pick, so the same seed pool feels different depending on who's playing, how
+ * the story has gone so far, and what just happened.
+ */
+const CATEGORY_KEYWORDS: Record<SituationCategory, string[]> = {
+  danger: ['도적', '맹수', '짐승', '위험', '싸움', '피습', '습격', '부상', '침입'],
+  work: ['셈', '삯', '도구', '장사', '시장', '흥정', '일감', '집세', '빚'],
+  social: ['모임', '대화', '손님', '이웃', '지인', '부탁', '다툼'],
+  mystery: ['발자국', '흔적', '수상', '의문', '정체', '샛길', '물건'],
+  horror: ['소리', '인기척', '그림자', '텅', '오싹', '섬뜩', '발소리'],
+  comedy: ['웃음', '오해', '소동', '실수', '엉뚱', '헤집'],
+};
+
+export function inferCategory(text: string): SituationCategory | null {
+  for (const [category, words] of Object.entries(CATEGORY_KEYWORDS) as [SituationCategory, string[]][]) {
+    if (words.some((w) => text.includes(w))) return category;
+  }
+  return null;
+}
+
+const RISKY_KEYWORDS = ['맞선다', '맞서', '정면', '따라간다', '다가가', '뛰어든다', '캐묻', '살펴본다', '확인한다', '쫓아다니'];
+const SAFE_KEYWORDS = ['피한다', '물러선다', '숨', '지켜본다', '되돌아간다', '거절', '넘긴다', '기다린다', '무시하고'];
+
+/** Exact-match against the known choice bank first (reliable); keyword guess as fallback for AI-authored text. */
+export function inferChoiceLean(text: string, knownLeans: Map<string, ChoiceLean>): ChoiceLean {
+  const known = knownLeans.get(text);
+  if (known) return known;
+  if (RISKY_KEYWORDS.some((w) => text.includes(w))) return 'risky';
+  if (SAFE_KEYWORDS.some((w) => text.includes(w))) return 'safe';
+  return 'neutral';
+}
+
+export function buildKnownChoiceLeans(seedCtx: SeedContext): Map<string, ChoiceLean> {
+  const map = new Map<string, ChoiceLean>();
+  buildSituationSeeds(seedCtx).forEach((seed) => {
+    seed.choices.forEach((choice) => map.set(choice.text, choice.lean));
+  });
+  return map;
+}
+
+const PERSONALITY_BIAS: Record<string, Partial<Record<SituationCategory, number>>> = {
+  '신중한': { work: 1.3, danger: 0.7 },
+  '대담한': { danger: 1.5, horror: 0.6 },
+  '냉소적인': { mystery: 1.3, comedy: 1.2 },
+  '다정한': { social: 1.5 },
+  '계산적인': { work: 1.4, mystery: 1.2 },
+  '고집스러운': { danger: 1.2, work: 1.2 },
+  '소심한': { horror: 1.4, social: 0.7 },
+  '낙천적인': { comedy: 1.5, horror: 0.6 },
+  '예민한': { horror: 1.4, mystery: 1.3 },
+  '무뚝뚝한': { work: 1.3, social: 0.7 },
+  '호기심 많은': { mystery: 1.6 },
+  '과묵한': { work: 1.2, social: 0.6 },
+};
+
+const JOB_CATEGORY_BIAS: Record<JobCategory, Partial<Record<SituationCategory, number>>> = {
+  labor: { work: 1.3, danger: 1.1 },
+  combat: { danger: 1.5 },
+  scholar: { mystery: 1.4, work: 1.1 },
+  merchant: { work: 1.4, comedy: 1.1 },
+  other: { mystery: 1.2 },
+};
+
+export interface SelectionContext {
+  seedCtx: SeedContext;
+  sceneMode: SceneMode;
+  avoidRepeat: boolean;
+  recentDayLogs: string[];
+  hpRatio: number;
+  luk: number;
+  phase: string;
+  linkedTier?: OutcomeTier;
+}
+
+function weightSeed(seed: SituationSeed, ctx: SelectionContext): number {
+  let weight = 1;
+
+  const recentCategories = ctx.recentDayLogs.map(inferCategory).filter((c): c is SituationCategory => !!c);
+  if (recentCategories.includes(seed.category)) {
+    weight *= ctx.avoidRepeat ? 0.25 : 1.3;
+  }
+
+  weight *= PERSONALITY_BIAS[ctx.seedCtx.personality]?.[seed.category] ?? 1;
+
+  const jobCategory = JOBS.find((j) => j.label === ctx.seedCtx.job)?.category;
+  if (jobCategory) weight *= JOB_CATEGORY_BIAS[jobCategory]?.[seed.category] ?? 1;
+
+  if (ctx.hpRatio < 0.3 && (seed.category === 'danger' || seed.category === 'horror')) {
+    weight *= 1.6;
+  }
+  if (ctx.luk <= 3 && seed.category === 'horror') weight *= 1.3;
+  if (ctx.luk >= 8 && seed.category === 'comedy') weight *= 1.3;
+
+  if ((ctx.phase === '격변기' || ctx.phase === '결말부') && (seed.category === 'danger' || seed.category === 'horror')) {
+    weight *= 1.3;
+  }
+  if (ctx.phase === '정착기' && (seed.category === 'work' || seed.category === 'social')) {
+    weight *= 1.2;
+  }
+
+  if (ctx.linkedTier === 'bad' && (seed.category === 'danger' || seed.category === 'horror')) {
+    weight *= 1.4;
+  }
+  if (ctx.linkedTier === 'good' && (seed.category === 'social' || seed.category === 'work' || seed.category === 'comedy')) {
+    weight *= 1.2;
+  }
+
+  return Math.max(weight, 0.05);
+}
+
+export function pickWeightedSeed(ctx: SelectionContext): SituationSeed {
+  const seeds = buildSituationSeeds(ctx.seedCtx);
+  const pool = seeds.filter((s) => s.mode === ctx.sceneMode);
+  const candidates = pool.length > 0 ? pool : seeds;
+
+  const weights = candidates.map((seed) => weightSeed(seed, ctx));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let roll = Math.random() * total;
+  for (let i = 0; i < candidates.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
+}

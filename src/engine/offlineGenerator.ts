@@ -1,63 +1,34 @@
 import { AITurnResponse, StatDelta, TurnContext } from '../types/game';
-import { applyLuckBias, sampleOutcomeTier, OutcomeTier } from './statGen';
-import { SceneTag } from '../data/backgroundThemes';
-import { eunNeun } from './korean';
+import { applyLuckBias, sampleOutcomeTier, OutcomeDistribution, OutcomeTier } from './statGen';
+import { ChoiceLean } from '../data/situationSeeds';
+import { buildKnownChoiceLeans, inferChoiceLean, pickWeightedSeed } from './situationSelector';
 
 /**
- * Local template-based fallback used when the Cloudflare Worker / Anthropic API
- * is unreachable, so the game always stays playable (see docs/design/04-ai-gamemaster-prompt.md).
- * Simplification: unlike the live AI, the situation shown for the next day is picked
- * independently from the outcome of the previous choice (both stay schema-compatible,
- * but the offline narrative is intentionally looser than the live AI's).
+ * Local seed-based fallback used when the Cloudflare Worker / Anthropic API is
+ * unreachable, so the game always stays playable (see docs/design/04-ai-gamemaster-prompt.md
+ * → "서사 흐름 유도"). Situation content lives in src/data/situationSeeds.ts (36 seeds,
+ * combinatorially well over 100 renders); this file picks one via situationSelector.ts
+ * and resolves the previous choice's outcome.
  */
-interface SituationTemplate {
-  tag: SceneTag;
-  build: (name: string, job: string, personality: string) => string;
-  choices: string[];
-}
-
-const SITUATION_TEMPLATES: SituationTemplate[] = [
-  {
-    tag: 'city',
-    build: (name, job) =>
-      `${name}${eunNeun(name)} 이른 아침 도시의 대로를 걷는다. ${job}으로서 오늘 해야 할 일이 산더미다. 저 앞에서 순찰대가 사람들을 붙잡고 무언가를 캐묻고 있다.`,
-    choices: ['순찰대를 피해 골목으로 돌아간다', '무슨 일인지 다가가서 물어본다', '신경 쓰지 않고 하던 일을 계속한다'],
-  },
-  {
-    tag: 'forest',
-    build: (name, job, personality) =>
-      `숲 가장자리에서 ${personality} 성격의 ${name}${eunNeun(name)} 낯선 발자국을 발견한다. 사람의 것 치고는 너무 크고, 짐승의 것 치고는 너무 규칙적이다.`,
-    choices: ['발자국을 따라가 본다', '거리를 두고 지켜본다', '왔던 길로 되돌아간다'],
-  },
-  {
-    tag: 'market',
-    build: (name) =>
-      `시장 한복판, ${name}의 앞에 낯선 상인이 좌판을 펼친다. 값싼 물건들 사이로 어딘가 사연 있어 보이는 물건 하나가 눈에 띈다.`,
-    choices: ['값을 흥정해 본다', '물건의 출처를 캐묻는다', '무시하고 지나간다'],
-  },
-  {
-    tag: 'danger',
-    build: (name) =>
-      `길이 좁아지는 협곡에서 ${name}${eunNeun(name)} 등 뒤에서 위험한 인기척을 느낀다. 산적일지도 모른다.`,
-    choices: ['빠르게 앞으로 달린다', '몸을 숨기고 상황을 살핀다', '정면으로 맞선다'],
-  },
-  {
-    tag: 'social',
-    build: (name, job, personality) =>
-      `저녁, 마을 사람들이 모임을 갖는 자리에 ${personality} ${name}도 어울리게 된다. 누군가 ${job}에 대해 험담 섞인 농담을 던진다.`,
-    choices: ['웃어넘긴다', '정색하며 받아친다', '자리를 슬쩍 피한다'],
-  },
-  {
-    tag: 'indoor',
-    build: (name) => `좁은 방 안, ${name}${eunNeun(name)} 오늘 번 것과 남은 식량을 헤아려 본다. 셈이 맞지 않는다.`,
-    choices: ['다시 꼼꼼히 계산해 본다', '내일 더 벌면 된다고 넘긴다', '누군가 훔쳤다고 의심한다'],
-  },
-];
-
 const NEXT_DAY_SUMMARIES: Record<OutcomeTier, string[]> = {
-  good: ['운 좋게 하루를 잘 넘겼다.', '뜻밖의 도움으로 상황이 나아졌다.'],
-  neutral: ['특별한 일 없이 하루가 지나갔다.', '평범하게 하루를 버텼다.'],
-  bad: ['뜻하지 않은 곤경에 처했다.', '작은 실수가 화를 불렀다.'],
+  good: [
+    '운 좋게 하루를 잘 넘겼다.',
+    '뜻밖의 도움으로 상황이 나아졌다.',
+    '작은 성과를 얻어 마음이 놓였다.',
+    '위기를 매끄럽게 피해 갔다.',
+  ],
+  neutral: [
+    '특별한 일 없이 하루가 지나갔다.',
+    '평범하게 하루를 버텼다.',
+    '이렇다 할 변화 없이 지나갔다.',
+    '이전과 크게 다르지 않은 하루였다.',
+  ],
+  bad: [
+    '뜻하지 않은 곤경에 처했다.',
+    '작은 실수가 화를 불렀다.',
+    '생각보다 힘든 하루를 보냈다.',
+    '피하고 싶던 문제가 결국 터졌다.',
+  ],
 };
 
 const OUTCOME_TEXT: Record<OutcomeTier, (choice: string) => string> = {
@@ -72,30 +43,55 @@ const STAT_DELTA_BY_TIER: Record<OutcomeTier, StatDelta> = {
   bad: { HP: -6 },
 };
 
+/** Doc 04: 선택지의 lean(안전/중립/위험)에 따라 결과 확률 분포 자체가 달라진다. */
+const LEAN_BASE: Record<ChoiceLean, OutcomeDistribution> = {
+  safe: { good: 0.3, neutral: 0.55, bad: 0.15 },
+  neutral: { good: 0.25, neutral: 0.5, bad: 0.25 },
+  risky: { good: 0.35, neutral: 0.2, bad: 0.45 },
+};
+
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 export function generateOfflineTurn(context: TurnContext): AITurnResponse {
-  const { character, chosenChoice } = context;
-  const template = pick(SITUATION_TEMPLATES);
-  const situation = template.build(character.name, character.job, character.personality);
+  const { character, chosenChoice, storyDirective, recentDayLogs, day } = context;
+  const seedCtx = { name: character.name, job: character.job, personality: character.personality };
 
-  if (!chosenChoice) {
+  let tier: OutcomeTier | undefined;
+  if (chosenChoice) {
+    const knownLeans = buildKnownChoiceLeans(seedCtx);
+    const lean = inferChoiceLean(chosenChoice, knownLeans);
+    const dist = applyLuckBias(character.stats.LUK, LEAN_BASE[lean]);
+    tier = sampleOutcomeTier(dist);
+  }
+
+  // Doc 04: 결과 티어(good/neutral/bad)가 다음 상황의 장르 가중치에도 영향을 준다 —
+  // "결과에 맞는 상황으로 이어지는" 흐름.
+  const seed = pickWeightedSeed({
+    seedCtx,
+    sceneMode: storyDirective.sceneMode,
+    avoidRepeat: storyDirective.avoidRepeat,
+    recentDayLogs: recentDayLogs ?? [],
+    hpRatio: character.hp / character.maxHp,
+    luk: character.stats.LUK,
+    phase: storyDirective.phase,
+    linkedTier: tier,
+  });
+  const choices = seed.choices.map((c) => c.text);
+
+  if (!chosenChoice || !tier) {
     return {
-      situation,
-      choices: template.choices,
+      situation: seed.situation,
+      choices,
       stat_changes: {},
-      day_summary: `${character.name}의 Day ${context.day} 이야기가 시작되었다.`,
+      day_summary: `${character.name}의 Day ${day} 이야기가 시작되었다.`,
     };
   }
 
-  const dist = applyLuckBias(character.stats.LUK);
-  const tier = sampleOutcomeTier(dist);
-
   return {
-    situation,
-    choices: template.choices,
+    situation: seed.situation,
+    choices,
     outcome: OUTCOME_TEXT[tier](chosenChoice),
     stat_changes: STAT_DELTA_BY_TIER[tier],
     day_summary: pick(NEXT_DAY_SUMMARIES[tier]),

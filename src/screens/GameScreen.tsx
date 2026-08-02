@@ -4,6 +4,8 @@ import { Character } from '../types/character';
 import { GameState, TOTAL_DAYS } from '../types/game';
 import { TurnSource, getNextTurn } from '../engine/turnService';
 import { buildTurnContext } from '../engine/promptBuilder';
+import { buildStoryDirective } from '../engine/storyFlow';
+import { pickEndingText } from '../engine/endingSelector';
 import { applyStatDelta } from '../engine/statGen';
 import { sampleLegacyMentions, saveLegacyRecord } from '../engine/legacyStore';
 import { buildReturnSummary, clearGameState, loadGameState, saveGameState } from '../engine/gameStateStore';
@@ -56,12 +58,19 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
   async function startNewGame(character: Character) {
     setLoading(true);
     const legacyMentions = await sampleLegacyMentions();
+    const storyDirective = buildStoryDirective({
+      day: 1,
+      totalDays: TOTAL_DAYS,
+      recentSceneModes: [],
+      recentDaySummaries: [],
+    });
     const context = buildTurnContext({
       character,
       day: 1,
       totalDays: TOTAL_DAYS,
       recentDayLogs: [],
       legacyMentions,
+      storyDirective,
     });
     const { response, source } = await getNextTurn(context);
     setLastSource(source);
@@ -70,6 +79,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       character,
       day: 1,
       dayLogs: [],
+      recentSceneModes: [storyDirective.sceneMode],
       currentSituation: response.situation,
       currentChoices: response.choices,
       lastOutcome: undefined,
@@ -95,12 +105,20 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
     setLoading(true);
     const chosenChoice = gameState.currentChoices[index];
     const legacyMentions = await sampleLegacyMentions();
+    const recentDayLogs = gameState.dayLogs.slice(-3);
+    const storyDirective = buildStoryDirective({
+      day: gameState.day,
+      totalDays: TOTAL_DAYS,
+      recentSceneModes: gameState.recentSceneModes ?? [],
+      recentDaySummaries: recentDayLogs,
+    });
     const context = buildTurnContext({
       character: gameState.character,
       day: gameState.day,
       totalDays: TOTAL_DAYS,
-      recentDayLogs: gameState.dayLogs.slice(-3),
+      recentDayLogs,
       legacyMentions,
+      storyDirective,
       chosenChoice,
     });
 
@@ -109,13 +127,16 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
 
     const updatedCharacter = applyStatDelta(gameState.character, response.stat_changes);
     const newDayLogs = [...gameState.dayLogs, response.day_summary];
+    const newSceneModes = [...(gameState.recentSceneModes ?? []), storyDirective.sceneMode].slice(-6);
 
     if (updatedCharacter.hp <= 0) {
-      await endGame(updatedCharacter, newDayLogs, gameState.day, '체력이 다하여 숨을 거두었다.');
+      const text = pickEndingText({ type: 'death', recentDayLogs: newDayLogs.slice(-3) });
+      await endGame(updatedCharacter, newDayLogs, gameState.day, text);
       return;
     }
     if (gameState.day >= TOTAL_DAYS) {
-      await endGame(updatedCharacter, newDayLogs, gameState.day, '99일간의 여정이 이렇게 마무리되었다.');
+      const text = pickEndingText({ type: 'complete', recentDayLogs: newDayLogs.slice(-3) });
+      await endGame(updatedCharacter, newDayLogs, gameState.day, text);
       return;
     }
 
@@ -123,6 +144,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       character: updatedCharacter,
       day: gameState.day + 1,
       dayLogs: newDayLogs,
+      recentSceneModes: newSceneModes,
       currentSituation: response.situation,
       currentChoices: response.choices,
       lastOutcome: response.outcome,
@@ -136,7 +158,8 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
 
   async function handleGiveUp() {
     if (!gameState) return;
-    await endGame(gameState.character, gameState.dayLogs, gameState.day, '스스로 삶을 내려놓기로 했다.');
+    const text = pickEndingText({ type: 'giveup', recentDayLogs: gameState.dayLogs.slice(-3) });
+    await endGame(gameState.character, gameState.dayLogs, gameState.day, text);
   }
 
   if (ending) {
