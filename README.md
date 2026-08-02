@@ -5,7 +5,8 @@
 조연/소문으로 다시 등장한다.
 
 NHN 'NAN 2026' 게임×AI 해커톤 **사전 과제** 제출물입니다. 전체 기획 배경과 세계관/스탯/AI 프롬프트/UX/
-계승 시스템 설계는 [docs/design](./docs/design)에 정리되어 있습니다.
+계승 시스템/배경 아트 로드맵 설계는 [docs/design](./docs/design)에 정리되어 있습니다. 진행 기록은
+[docs/design/PROGRESS.md](./docs/design/PROGRESS.md), 남은 작업은 [docs/design/ROADMAP.md](./docs/design/ROADMAP.md) 참고.
 
 ## 플레이
 
@@ -55,13 +56,15 @@ GitHub Pages에 배포합니다.
 99days/
   App.tsx                  # 화면 전환(캐릭터 생성 ↔ 게임) 상태 머신
   src/
-    types/                  # Character, GameState, LegacyRecord 등 타입
-    data/                   # 지역/직업/이름/성격/배경 테마 데이터
-    engine/                 # 스탯 계산, 캐릭터 생성, 저장소, AI 프롬프트/클라이언트, 오프라인 폴백
+    types/                  # Character, GameState, TurnContext, StoryDirective 등 타입
+    data/                   # 지역/직업/이름/성격/배경 테마 + 오프라인 상황 시드/엔딩 콘텐츠
+    engine/                 # 스탯 계산, 캐릭터 생성, 저장소, AI 프롬프트/클라이언트, 서사 흐름(storyFlow)
+                            # + 오프라인 상황/엔딩 가중 선택기, 응답 글자수 제한
     screens/                # 캐릭터 생성, 게임, 상태 패널
     components/             # 배경, Day 진행바, 선택지, 복귀 요약 배너
   worker/                   # Cloudflare Worker (AI 프록시) — worker/README.md 참고
-  docs/design/              # 세계관/스탯/캐릭터생성/AI프롬프트/UI/계승 시스템 설계 문서
+  docs/design/              # 세계관/스탯/캐릭터생성/AI프롬프트/UI/계승 시스템/배경아트 로드맵 설계 문서
+                            # + PROGRESS.md(진행 기록), ROADMAP.md(할 일)
   .github/workflows/        # GitHub Pages 배포 워크플로우
 ```
 
