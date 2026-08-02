@@ -112,5 +112,6 @@ export function applyStatDelta(character: Character, delta: StatDelta): Characte
     LUK: clamp(character.stats.LUK + (delta.LUK ?? 0), 1, 20),
   };
   const hp = clamp(character.hp + (delta.HP ?? 0), 0, character.maxHp);
-  return { ...character, stats, hp };
+  const age = clamp(character.age + (delta.AGE ?? 0), 1, 120);
+  return { ...character, stats, hp, age };
 }

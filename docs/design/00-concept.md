@@ -18,4 +18,4 @@
 - 코어 루프: 랜덤 생성된 캐릭터가 매일 AI가 그 순간의 상태를 반영해 만들어주는 상황을 마주함 → 선택 → 결과/스탯 변화 → 다음 날. 정해진 엔딩 없이 계속 진행되며, 사망하거나 포기한 캐릭터는 로컬에 저장되어 이후 플레이에 과거 인물(소문/조연/유산)로 재등장한다.
 - 세계관은 개발자 본인이 집필 중인 오리지널 소설을 기반으로 한다 (외부 IP 아님, 저작권 문제 없음).
 
-세부 세계관 규칙은 [01-world-setting.md](./01-world-setting.md), 스탯 시스템은 [02-stats-system.md](./02-stats-system.md), 캐릭터 생성은 [03-character-generation.md](./03-character-generation.md), AI 게임마스터 프롬프트는 [04-ai-gamemaster-prompt.md](./04-ai-gamemaster-prompt.md), UI/UX는 [05-ui-ux.md](./05-ui-ux.md), 계승 시스템은 [06-legacy-system.md](./06-legacy-system.md)를 참고.
+세부 세계관 규칙은 [01-world-setting.md](./01-world-setting.md), 스탯 시스템은 [02-stats-system.md](./02-stats-system.md), 캐릭터 생성은 [03-character-generation.md](./03-character-generation.md), AI 게임마스터 프롬프트는 [04-ai-gamemaster-prompt.md](./04-ai-gamemaster-prompt.md), UI/UX는 [05-ui-ux.md](./05-ui-ux.md), 계승 시스템은 [06-legacy-system.md](./06-legacy-system.md), 배경 아트 프롬프트 로드맵은 [07-background-art-prompts.md](./07-background-art-prompts.md)를 참고.
