@@ -99,7 +99,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       character: gameState.character,
       day: gameState.day,
       totalDays: TOTAL_DAYS,
-      recentDayLogs: gameState.dayLogs.slice(-5),
+      recentDayLogs: gameState.dayLogs.slice(-3),
       legacyMentions,
       chosenChoice,
     });
