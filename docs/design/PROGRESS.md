@@ -12,5 +12,7 @@
 | 2026-08-02 | 서사 흐름 피드백 반영: outcome=전날 요약→situation=자연스러운 오늘 도입부로 프롬프트 재정비, `storyDirective.timeSkip`(며칠~몇 년 시간 압축 서술, 12% 확률)과 `stat_changes.AGE` 추가, 오프라인 라이브러리에 `bond`(호감/우정/애정) 카테고리 신설(36→40 시드, ~184종 렌더). 배경 아트 키워드 프롬프트 로드맵을 [07-background-art-prompts.md](./07-background-art-prompts.md)로 별도 작성(설계만, 미구현) |
 | 2026-08-02 | 스크린샷 피드백 반영: 오프라인 폴백이 "대가를 치러야 했다"처럼 결과를 뭉뚱그리던 것을 lean별 구체적 문구로 교체, 하루↔하루 사이에 아무 연결 문구 없이 시드가 점프하던 문제를 `buildTransitionPrefix()`("다음 날," / timeSkip 문구)로 완화 |
 | 2026-08-03 | "결과가 어떻게 끝난 건지 모르겠다"는 후속 피드백 반영: 선택지를 우리 시드로 역추적해(`inferChoiceCategory`) 카테고리별 구체적 결말(`CATEGORY_RESOLUTIONS`)로 교체, 시드 자체 시간대 표현과 "다음 날,"이 겹치는 중복 제거. 스탯 변화(HP/STR/INT/AGI/LUK/AGE)를 `StatChangeBadges` 컴포넌트로 결과 옆에 시각화 |
+| 2026-08-03 | "같은 상황이 반복해서 나온다" 피드백 반영: `GameState.usedSeedIds`로 오프라인 폴백이 이미 보여준 시드를 캐릭터별로 기억해 제외, 해당 모드(외출/거처)의 시드를 전부 소진하면 그때만 순환 리셋(`pickWeightedSeed`의 `wasReset`) |
+| 2026-08-03 | 99일 완주 1판에 AI 호출이 최대 ~100회 필요함을 확인 — `DAILY_LIMIT`을 50→120으로 상향해 후반부도 AI로 이어지게 함, Worker 재배포. 이후 세션부터는 매 작업 끝에 확인 없이 바로 main 머지까지 진행하기로 함 |
 
 앞으로 진행 시 이 표에 날짜/내용을 추가한다. 다음 할 일은 [ROADMAP.md](./ROADMAP.md) 참고.

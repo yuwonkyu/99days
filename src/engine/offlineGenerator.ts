@@ -132,7 +132,15 @@ function buildOutcome(choice: string, lean: ChoiceLean, tier: OutcomeTier, categ
   return GENERIC_OUTCOME_TEXT[tier](choice, lean);
 }
 
-export function generateOfflineTurn(context: TurnContext): AITurnResponse {
+export interface OfflineTurnResult {
+  response: AITurnResponse;
+  /** 이번에 고른 시드의 id — GameState.usedSeedIds에 쌓아서 다음 호출 때 excludeIds로 넘긴다. */
+  usedSeedId: string;
+  /** true면 이 모드의 시드를 다 봐서 순환을 리셋했다는 뜻 — 호출자가 usedSeedIds를 [usedSeedId]로 새로 시작해야 한다. */
+  resetUsedSeeds: boolean;
+}
+
+export function generateOfflineTurn(context: TurnContext, usedSeedIds: string[] = []): OfflineTurnResult {
   const { character, chosenChoice, storyDirective, recentDayLogs, day } = context;
   const seedCtx = { name: character.name, job: character.job, personality: character.personality };
 
@@ -148,8 +156,8 @@ export function generateOfflineTurn(context: TurnContext): AITurnResponse {
   }
 
   // Doc 04: 결과 티어(good/neutral/bad)가 다음 상황의 장르 가중치에도 영향을 준다 —
-  // "결과에 맞는 상황으로 이어지는" 흐름.
-  const seed = pickWeightedSeed({
+  // "결과에 맞는 상황으로 이어지는" 흐름. excludeIds로 "한번 나온 상황은 다시 안 나오게" 한다.
+  const { seed, wasReset } = pickWeightedSeed({
     seedCtx,
     sceneMode: storyDirective.sceneMode,
     avoidRepeat: storyDirective.avoidRepeat,
@@ -158,6 +166,7 @@ export function generateOfflineTurn(context: TurnContext): AITurnResponse {
     luk: character.stats.LUK,
     phase: storyDirective.phase,
     linkedTier: tier,
+    excludeIds: new Set(usedSeedIds),
   });
   const choices = seed.choices.map((c) => c.text);
   const prefix = buildTransitionPrefix(day, storyDirective.timeSkip, storyDirective.timeSkipLabel, seed.situation);
@@ -165,18 +174,26 @@ export function generateOfflineTurn(context: TurnContext): AITurnResponse {
 
   if (!chosenChoice || !tier) {
     return {
-      situation,
-      choices,
-      stat_changes: {},
-      day_summary: `${character.name}의 Day ${day} 이야기가 시작되었다.`,
+      response: {
+        situation,
+        choices,
+        stat_changes: {},
+        day_summary: `${character.name}의 Day ${day} 이야기가 시작되었다.`,
+      },
+      usedSeedId: seed.id,
+      resetUsedSeeds: wasReset,
     };
   }
 
   return {
-    situation,
-    choices,
-    outcome: buildOutcome(chosenChoice, lean, tier, category),
-    stat_changes: STAT_DELTA_BY_TIER[tier],
-    day_summary: pick(NEXT_DAY_SUMMARIES[tier]),
+    response: {
+      situation,
+      choices,
+      outcome: buildOutcome(chosenChoice, lean, tier, category),
+      stat_changes: STAT_DELTA_BY_TIER[tier],
+      day_summary: pick(NEXT_DAY_SUMMARIES[tier]),
+    },
+    usedSeedId: seed.id,
+    resetUsedSeeds: wasReset,
   };
 }

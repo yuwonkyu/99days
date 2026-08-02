@@ -105,6 +105,11 @@
   카테고리에 맞는 구체적 결말(`CATEGORY_RESOLUTIONS`, 카테고리×티어별 문구)을 쓴다. 예:
   mystery+bad → "쫓다가 위험한 존재와 정면으로 마주쳐 놀란 가슴을 쓸어내리며 도망쳤다." 선택지가
   AI가 쓴 문구라 카테고리를 모르면 lean(안전/위험) 기반 일반 문구로 폴백한다.
+- **"같은 상황이 반복해서 나온다" 피드백**: `GameState.usedSeedIds`에 캐릭터가 오프라인 폴백에서 이미
+  본 시드 id를 쌓아두고, `pickWeightedSeed()`가 이를 후보에서 제외한다(같은 `sceneMode` 풀을 전부
+  보기 전까진 반복 안 함). 그 모드의 시드를 다 보면 `wasReset`이 true가 되어 목록을 새로 시작하고
+  다시 한 바퀴 순환한다 — 40개 시드가 유한하니 "영원히 반복 없음"은 불가능하지만, 최소한 매 순환마다
+  전부 다 보여준 뒤에만 반복되게 한다. AI 경로는 애초에 매번 새로 생성하므로 해당 없음.
 - **스탯 변화 UI 표시**: 결과 텍스트만으로는 실제로 뭐가 얼마나 바뀌었는지 안 보인다는 피드백 —
   [StatChangeBadges.tsx](../../src/components/StatChangeBadges.tsx)가 `stat_changes`(HP/STR/INT/AGI/
   LUK/AGE)를 색깔 있는 뱃지로 결과 텍스트 옆에 표시한다(AI/오프라인 공통).

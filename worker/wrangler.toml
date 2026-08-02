@@ -4,7 +4,9 @@ compatibility_date = "2024-11-01"
 
 [vars]
 ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
-DAILY_LIMIT = "50"
+# 99일 완주 1판에 AI 호출이 최대 ~100회 필요 (Day 1 시작 + 99번의 선택). 50이면 항상 후반부가
+# 오프라인 폴백으로 넘어가므로, 완주분 + 여유를 두고 120으로 설정 (IP당 하루 최대 약 $0.36).
+DAILY_LIMIT = "120"
 ALLOWED_ORIGIN = "https://yuwonkyu.github.io"
 
 # Rate limiting needs a KV namespace. Create one with:
