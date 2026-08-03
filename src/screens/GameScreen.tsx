@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Character } from '../types/character';
-import { GameState, TOTAL_DAYS } from '../types/game';
+import { GameState, StoryThread, TOTAL_DAYS } from '../types/game';
 import { TurnSource, getNextTurn } from '../engine/turnService';
 import { buildTurnContext } from '../engine/promptBuilder';
 import { buildStoryDirective } from '../engine/storyFlow';
@@ -104,6 +104,10 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       lastStatChanges: undefined,
       lastPlayedAt: Date.now(),
       isEnded: false,
+      activeThread:
+        response.thread?.status === 'continuing' && response.thread.summary
+          ? { summary: response.thread.summary, category: response.thread.category, openedDay: 1, turns: 1 }
+          : undefined,
     };
     await saveGameState(newState);
     setGameState(newState);
@@ -125,11 +129,13 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
     const chosenChoice = gameState.currentChoices[index];
     const legacyMentions = await sampleLegacyMentions();
     const recentDayLogs = gameState.dayLogs.slice(-3);
+    const activeThread = gameState.activeThread;
     const storyDirective = buildStoryDirective({
       day: gameState.day,
       totalDays: TOTAL_DAYS,
       recentSceneModes: gameState.recentSceneModes ?? [],
       recentDaySummaries: recentDayLogs,
+      hasActiveThread: !!activeThread,
     });
     const context = buildTurnContext({
       character: gameState.character,
@@ -139,10 +145,20 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       legacyMentions,
       storyDirective,
       chosenChoice,
+      activeThread,
     });
 
     const { response, source, usedSeedId, resetUsedSeeds } = await getNextTurn(context, gameState.usedSeedIds ?? []);
     setLastSource(source);
+    const newActiveThread: StoryThread | undefined =
+      response.thread?.status === 'continuing' && response.thread.summary
+        ? {
+            summary: response.thread.summary,
+            category: response.thread.category,
+            openedDay: activeThread?.openedDay ?? gameState.day,
+            turns: (activeThread?.turns ?? 0) + 1,
+          }
+        : undefined;
 
     const updatedCharacter = applyStatDelta(gameState.character, response.stat_changes);
     const newDayLogs = [...gameState.dayLogs, response.day_summary];
@@ -176,6 +192,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       lastStatChanges: response.stat_changes,
       lastPlayedAt: Date.now(),
       isEnded: false,
+      activeThread: newActiveThread,
     };
     await saveGameState(newState);
     setGameState(newState);
@@ -242,6 +259,26 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
             )}
             {currentPage?.type === 'situation' && <Text style={styles.situationText}>{currentPage.text}</Text>}
 
+            {pages.length > 1 && (
+              <View style={styles.pageNavRow}>
+                <Pressable
+                  style={[styles.prevButton, pageIndex === 0 && styles.navButtonDisabled]}
+                  onPress={() => setPageIndex((i) => Math.max(0, i - 1))}
+                  disabled={pageIndex === 0}
+                >
+                  <Text style={styles.prevButtonText}>◀ 이전</Text>
+                </Pressable>
+                <Text style={styles.pageIndicator}>
+                  {pageIndex + 1} / {pages.length}
+                </Text>
+                {!isLastPage && (
+                  <Pressable style={styles.nextButton} onPress={() => setPageIndex((i) => i + 1)}>
+                    <Text style={styles.nextButtonText}>다음 ▶</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+
             {loading ? (
               <View style={styles.inlineLoading}>
                 <ActivityIndicator color="#fff" />
@@ -249,16 +286,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
               </View>
             ) : isLastPage ? (
               <ChoiceList choices={gameState.currentChoices} onSelect={handleChoice} disabled={loading} />
-            ) : (
-              <>
-                <Pressable style={styles.nextButton} onPress={() => setPageIndex((i) => i + 1)}>
-                  <Text style={styles.nextButtonText}>다음 ▶</Text>
-                </Pressable>
-                <Text style={styles.pageIndicator}>
-                  {pageIndex + 1} / {pages.length}
-                </Text>
-              </>
-            )}
+            ) : null}
 
             {isLastPage && lastSource && (
               <Text style={styles.sourceBadge}>
@@ -305,16 +333,23 @@ const styles = StyleSheet.create({
   situationText: { color: '#fff', fontSize: 16, lineHeight: 23 },
   inlineLoading: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 },
   inlineLoadingText: { color: '#c8ccd8', fontSize: 13 },
+  pageNavRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 10 },
+  prevButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  prevButtonText: { color: '#c8ccd8', fontSize: 13, fontWeight: '600' },
+  navButtonDisabled: { opacity: 0.3 },
   nextButton: {
-    marginTop: 14,
-    alignSelf: 'flex-end',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
     backgroundColor: 'rgba(255,255,255,0.18)',
   },
   nextButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  pageIndicator: { color: '#7a8299', fontSize: 11, marginTop: 6, textAlign: 'right' },
+  pageIndicator: { color: '#7a8299', fontSize: 11, textAlign: 'center' },
   sourceBadge: { color: '#7a8299', fontSize: 10, marginTop: 14, textAlign: 'right' },
   loadingContainer: { flex: 1, backgroundColor: '#161a24', alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { color: '#c8ccd8', fontSize: 14 },

@@ -14,6 +14,19 @@ export interface StatDelta {
 }
 
 /**
+ * Doc 04: lets a situation span multiple days as a connected mini-arc instead
+ * of every day being generated as an independent one-off vignette. 'continuing'
+ * means the same conflict/person/place carries into tomorrow (summary/category
+ * required); 'resolved' means a previously open thread concluded this turn;
+ * 'none' means this situation was (or is now) self-contained.
+ */
+export interface ThreadUpdate {
+  status: 'none' | 'continuing' | 'resolved';
+  summary?: string;
+  category?: string;
+}
+
+/**
  * Shape returned by both the AI game master (via the Cloudflare Worker) and
  * the offline fallback generator. `outcome`/`stat_changes` describe the result
  * of the choice made on the previous day; they are absent on the very first
@@ -25,6 +38,16 @@ export interface AITurnResponse {
   outcome?: string;
   stat_changes: StatDelta;
   day_summary: string;
+  thread?: ThreadUpdate;
+}
+
+/** Doc 04: the currently open multi-day story thread, persisted in GameState. */
+export interface StoryThread {
+  summary: string;
+  category?: string;
+  openedDay: number;
+  /** How many turns (including this one) the thread has been continuing — lets the prompt nudge toward closing it instead of dragging forever. */
+  turns: number;
 }
 
 /** 하루의 큰 활동 성격 — Doc 04: 반복 방지/흐름 유도용 힌트. `외출`(여정/순찰/사냥/교역/탐색) vs `거처`(방어/은신/은폐/거주/피난). */
@@ -55,6 +78,8 @@ export interface TurnContext {
   legacyMentions: LegacyMention[];
   storyDirective: StoryDirective;
   chosenChoice?: string;
+  /** Doc 04: an in-progress multi-day thread from a prior turn, if any — the generator must continue or resolve it, not silently drop it. */
+  activeThread?: StoryThread;
 }
 
 export interface GameState {
@@ -72,4 +97,6 @@ export interface GameState {
   lastReturnSummary?: string;
   lastPlayedAt: number;
   isEnded: boolean;
+  /** Doc 04: the multi-day story thread currently in progress, if any — undefined when the last turn was self-contained or just closed one. */
+  activeThread?: StoryThread;
 }

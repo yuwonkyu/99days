@@ -123,6 +123,17 @@ function buildTransitionPrefix(day: number, timeSkip: boolean, timeSkipLabel: st
   return '다음 날, ';
 }
 
+/**
+ * Doc 04: activeThread(AI가 열어둔 다일 스토리)가 있는 상태로 오프라인 폴백이 뽑히면, 우리 시드
+ * 뱅크는 그 스레드의 구체적 인물/장소를 이어 쓸 수 없다. 아무 언급 없이 무관한 새 시드로 넘어가면
+ * 스레드가 조용히 증발한 것처럼 느껴지므로(원래 버그와 같은 종류의 단절), 명시적으로 한 줄 닫고
+ * 넘어간다.
+ */
+function buildThreadClosurePrefix(summary: string | undefined): string {
+  if (!summary) return '';
+  return `그 사이 ${summary} 쪽 일은 잠시 소강상태로 접어들었다. `;
+}
+
 /** category를 알면(=어제 선택이 우리 시드에서 나왔으면) 그 맥락에 맞는 구체적 결말을, 모르면 lean 기반 일반 문구를 쓴다. */
 function buildOutcome(choice: string, lean: ChoiceLean, tier: OutcomeTier, category: SituationCategory | null): string {
   if (category) {
@@ -141,7 +152,7 @@ export interface OfflineTurnResult {
 }
 
 export function generateOfflineTurn(context: TurnContext, usedSeedIds: string[] = []): OfflineTurnResult {
-  const { character, chosenChoice, storyDirective, recentDayLogs, day } = context;
+  const { character, chosenChoice, storyDirective, recentDayLogs, day, activeThread } = context;
   const seedCtx = { name: character.name, job: character.job, personality: character.personality };
 
   let tier: OutcomeTier | undefined;
@@ -169,8 +180,11 @@ export function generateOfflineTurn(context: TurnContext, usedSeedIds: string[] 
     excludeIds: new Set(usedSeedIds),
   });
   const choices = seed.choices.map((c) => c.text);
+  const threadClosure = buildThreadClosurePrefix(activeThread?.summary);
   const prefix = buildTransitionPrefix(day, storyDirective.timeSkip, storyDirective.timeSkipLabel, seed.situation);
-  const situation = `${prefix}${seed.situation}`;
+  const situation = `${threadClosure}${prefix}${seed.situation}`;
+  // 오프라인 시드는 activeThread를 이어 쓸 수 없으므로 항상 명시적으로 닫는다(위 buildThreadClosurePrefix).
+  const thread: AITurnResponse['thread'] = activeThread ? { status: 'resolved' } : { status: 'none' };
 
   if (!chosenChoice || !tier) {
     return {
@@ -179,6 +193,7 @@ export function generateOfflineTurn(context: TurnContext, usedSeedIds: string[] 
         choices,
         stat_changes: {},
         day_summary: `${character.name}의 Day ${day} 이야기가 시작되었다.`,
+        thread,
       },
       usedSeedId: seed.id,
       resetUsedSeeds: wasReset,
@@ -192,6 +207,7 @@ export function generateOfflineTurn(context: TurnContext, usedSeedIds: string[] 
       outcome: buildOutcome(chosenChoice, lean, tier, category),
       stat_changes: STAT_DELTA_BY_TIER[tier],
       day_summary: pick(NEXT_DAY_SUMMARIES[tier]),
+      thread,
     },
     usedSeedId: seed.id,
     resetUsedSeeds: wasReset,
