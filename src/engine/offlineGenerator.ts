@@ -96,7 +96,7 @@ const CATEGORY_RESOLUTIONS: Record<SituationCategory, Record<OutcomeTier, string
 const STAT_DELTA_BY_TIER: Record<OutcomeTier, StatDelta> = {
   good: { HP: 2, LUK: 1 },
   neutral: {},
-  bad: { HP: -6 },
+  bad: { HP: -6, LUK: -1 },
 };
 
 /** Doc 04: 선택지의 lean(안전/중립/위험)에 따라 결과 확률 분포 자체가 달라진다. */

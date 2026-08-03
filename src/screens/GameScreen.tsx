@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Character } from '../types/character';
 import { GameState, TOTAL_DAYS } from '../types/game';
@@ -9,6 +9,7 @@ import { pickEndingText } from '../engine/endingSelector';
 import { applyStatDelta } from '../engine/statGen';
 import { sampleLegacyMentions, saveLegacyRecord } from '../engine/legacyStore';
 import { buildReturnSummary, clearGameState, loadGameState, saveGameState } from '../engine/gameStateStore';
+import { paginate } from '../engine/textLimits';
 import { inferSceneTag } from '../data/backgroundThemes';
 import BackgroundScene from '../components/BackgroundScene';
 import DayProgressBar from '../components/DayProgressBar';
@@ -35,11 +36,26 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
   const [returnSummary, setReturnSummary] = useState<string | null>(null);
   const [lastSource, setLastSource] = useState<TurnSource | null>(null);
   const [ending, setEnding] = useState<EndingInfo | null>(null);
+  const [pageIndex, setPageIndex] = useState(0);
 
   useEffect(() => {
     bootstrap();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [gameState?.day, gameState?.currentSituation]);
+
+  const pages = useMemo(() => {
+    if (!gameState) return [];
+    const outcomePages = paginate(gameState.lastOutcome).map((text) => ({ type: 'outcome' as const, text }));
+    const situationPages = paginate(gameState.currentSituation).map((text) => ({ type: 'situation' as const, text }));
+    return [...outcomePages, ...situationPages];
+  }, [gameState?.lastOutcome, gameState?.currentSituation]);
+
+  const currentPage = pages[pageIndex];
+  const isLastPage = pageIndex >= pages.length - 1;
 
   async function bootstrap() {
     const saved = await loadGameState();
@@ -218,24 +234,33 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
 
         <ScrollView contentContainerStyle={styles.panelScroll}>
           <View style={styles.panel}>
-            {gameState.lastOutcome && (
+            {currentPage?.type === 'outcome' && (
               <>
-                <Text style={styles.outcomeText}>{gameState.lastOutcome}</Text>
+                <Text style={styles.outcomeText}>{currentPage.text}</Text>
                 <StatChangeBadges delta={gameState.lastStatChanges} />
               </>
             )}
-            <Text style={styles.situationText}>{gameState.currentSituation}</Text>
+            {currentPage?.type === 'situation' && <Text style={styles.situationText}>{currentPage.text}</Text>}
 
             {loading ? (
               <View style={styles.inlineLoading}>
                 <ActivityIndicator color="#fff" />
                 <Text style={styles.inlineLoadingText}>다음 상황을 생각하는 중...</Text>
               </View>
-            ) : (
+            ) : isLastPage ? (
               <ChoiceList choices={gameState.currentChoices} onSelect={handleChoice} disabled={loading} />
+            ) : (
+              <>
+                <Pressable style={styles.nextButton} onPress={() => setPageIndex((i) => i + 1)}>
+                  <Text style={styles.nextButtonText}>다음 ▶</Text>
+                </Pressable>
+                <Text style={styles.pageIndicator}>
+                  {pageIndex + 1} / {pages.length}
+                </Text>
+              </>
             )}
 
-            {lastSource && (
+            {isLastPage && lastSource && (
               <Text style={styles.sourceBadge}>
                 {lastSource === 'ai' ? 'AI 게임마스터 생성' : '오프라인 폴백 생성'}
               </Text>
@@ -280,6 +305,16 @@ const styles = StyleSheet.create({
   situationText: { color: '#fff', fontSize: 16, lineHeight: 23 },
   inlineLoading: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 },
   inlineLoadingText: { color: '#c8ccd8', fontSize: 13 },
+  nextButton: {
+    marginTop: 14,
+    alignSelf: 'flex-end',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  nextButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  pageIndicator: { color: '#7a8299', fontSize: 11, marginTop: 6, textAlign: 'right' },
   sourceBadge: { color: '#7a8299', fontSize: 10, marginTop: 14, textAlign: 'right' },
   loadingContainer: { flex: 1, backgroundColor: '#161a24', alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { color: '#c8ccd8', fontSize: 14 },
