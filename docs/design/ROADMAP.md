@@ -45,9 +45,10 @@
 
 ## 5. 배경 아트
 
-- [x] Phase 3/4 코드 연결(2026-08-03): `BackgroundScene.tsx`가 `assets/backgrounds/{city,forest,market,danger,social,indoor}.png` 6장을 정적 `require()`로 불러와 그라디언트 위에 얹도록 구현. 지금은 6장 모두 1x1 투명 PNG 자리표시자라 기존 그라디언트와 화면상 차이가 없음 — 실제 아트로 같은 파일명으로 덮어쓰기만 하면 코드 수정 없이 바로 반영됨
+- [x] Phase 3/4 코드 연결(2026-08-03): `BackgroundScene.tsx`가 `assets/backgrounds/{city,forest,market,danger,social,indoor}.png` 6장을 정적 `require()`로 불러와 그라디언트 위에 얹도록 구현. 실제 아트로 같은 파일명으로 덮어쓰기만 하면 코드 수정 없이 바로 반영됨
+- [x] `city`/`danger`/`forest`/`indoor`/`market` 5장 실제 아트 제작 완료(2026-08-03, Gemini) — `assets/backgrounds/`에 반영, 브라우저에서 실제 이미지 로드 확인
+- [ ] **`social.png`만 아직 자리표시자(1x1 투명 PNG)** — 프롬프트를 아직 안 만듦(offline 시드 40개 중 1개만 이 태그라 우선순위 최하위였음). 다음 세션에서 프롬프트 작성 후 이미지 제작 필요
 - [ ] `offline 시드 40개를 inferSceneTag()로 실측한 결과, 40개 중 24개(60%)가 특정 키워드에 안 걸리고 기본값 `city`로 빠짐 — 특히 `거처`(shelter 모드 시드 대부분에 쓰이는 단어)가 `indoor` 키워드 목록에 없어서 생기는 문제. `backgroundThemes.ts`의 `KEYWORD_TAGS`에 `거처` 추가하면 분류 정확도 개선 가능(아직 미적용)
-- [ ] 6장의 실제 아트 제작(Gemini 등으로 생성 예정, 프롬프트는 [07-background-art-prompts.md](./07-background-art-prompts.md) 참고) 후 `assets/backgrounds/`에 동일 파일명으로 교체
 - [ ] SceneTag 6종 단일 이미지로는 부족하다고 판단되면(예: `indoor`를 상황별로 더 세분화) `BackgroundScene`의 키를 tag+category로 확장하는 것도 고려 가능 — 지금은 단순하게 6장으로 시작
 
 ## 6. 제출 준비
