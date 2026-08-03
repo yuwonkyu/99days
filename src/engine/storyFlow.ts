@@ -70,14 +70,17 @@ export function buildStoryDirective(params: {
   totalDays: number;
   recentSceneModes: SceneMode[];
   recentDaySummaries: string[];
+  /** Doc 04: true while a multi-day story thread is open — suppresses the variety/time-skip
+   * pressure below so the pacing layer doesn't fight the thread's own continuity. */
+  hasActiveThread?: boolean;
 }): StoryDirective {
   const phase = getPhase(params.day, params.totalDays);
   const sceneMode = pickSceneMode(params.recentSceneModes);
   const recentTags = params.recentDaySummaries.map(inferSceneTag);
   const tagCounts = new Map<string, number>();
   recentTags.forEach((tag) => tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1));
-  const avoidRepeat = [...tagCounts.values()].some((count) => count >= 2);
-  const { timeSkip, timeSkipLabel } = pickTimeSkip(params.day);
+  const avoidRepeat = !params.hasActiveThread && [...tagCounts.values()].some((count) => count >= 2);
+  const { timeSkip, timeSkipLabel } = params.hasActiveThread ? { timeSkip: false, timeSkipLabel: undefined } : pickTimeSkip(params.day);
 
   return {
     phase: phase.label,

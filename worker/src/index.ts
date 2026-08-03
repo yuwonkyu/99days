@@ -40,6 +40,11 @@ const SYSTEM_PROMPT = `당신은 텍스트 기반 생존 성장 시뮬레이션 
 - sceneMode(외출/거처): "외출"이면 여정·순찰·사냥·교역·탐색처럼 밖으로 나가는 성격의 사건을, "거처"면 방어·은신·은폐·거주·피난처럼 머무는 성격의 사건을 자연스럽게 녹여낼 것 (단어를 그대로 쓰라는 뜻이 아니라 그 성격의 상황을 만들라는 뜻)
 - avoidRepeat가 true면 recentTags와 겹치지 않는 새로운 장소·인물·사건을 반드시 등장시킬 것
 
+[이야기 흐름(단편/장편) 안내 - turnContext.activeThread 활용]
+- activeThread가 있으면: 이번 situation은 그 인물·장소·갈등을 반드시 그대로 이어서 다룰 것 — 관계없는 새 사건으로 갑자기 전환하는 것 절대 금지. 오늘로 그 사안이 끝나면 thread.status를 "resolved"로, 아직 진행 중이면 "continuing"으로 하고 summary를 지금 상태에 맞게 갱신할 것. activeThread.turns가 4 이상이면 되도록 이번이나 다음 턴 안에 매듭지을 것 (무한정 끌지 말 것)
+- activeThread가 없으면: situation은 기본적으로 그날 안에 끝나는 단편으로 다루고 thread.status는 "none"으로 둘 것. 다만 가끔(매 턴은 아니고 이따금) 다음 날로 이어질 만한 여운이 남는 사건이면 thread.status를 "continuing"으로 하고 summary/category를 채워 짧은 연속 사건(보통 2~5일)을 새로 시작해도 좋음 — 매번 새로 시작할 필요는 없음
+- thread.summary는 20자 이내로 "누구와 무엇이 진행 중인지"만 담을 것 (예: "숲 파수꾼과의 대치")
+
 [하루/시간 흐름 서술 원칙]
 - Day는 문자 그대로 24시간이 아니어도 된다. storyDirective.timeSkip이 true면 timeSkipLabel(예: "몇 주", "몇 년")만큼 시간이 흘렀음을 situation 도입부에 자연스럽게 녹여 서술할 것. false면 전날 바로 다음으로 이어지는 하루로 서술
 - timeSkip이 "몇 년"처럼 큰 폭이면 stat_changes.AGE로 나이 증가를 정수로 반영해도 된다 (작은 폭이면 생략)
@@ -88,8 +93,21 @@ const TOOL_SCHEMA = {
         },
       },
       day_summary: { type: 'string', description: '30자 이내, 복귀 시 요약용 한 줄' },
+      thread: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['none', 'continuing', 'resolved'],
+            description: '이 situation이 다음 날로 이어지는 사안인지 — none: 오늘로 끝나는 단편, continuing: 다음 날도 이어짐(summary 필수), resolved: activeThread가 오늘로 매듭지어짐',
+          },
+          summary: { type: 'string', description: '20자 이내, "누구와 무엇이 진행 중인지" — status가 continuing일 때 필수' },
+          category: { type: 'string', description: '예: danger/work/social/mystery/horror/comedy/bond' },
+        },
+        required: ['status'],
+      },
     },
-    required: ['situation', 'choices', 'stat_changes', 'day_summary'],
+    required: ['situation', 'choices', 'stat_changes', 'day_summary', 'thread'],
   },
 };
 
@@ -137,7 +155,10 @@ async function callAnthropic(env: Env, turnContext: unknown): Promise<unknown> {
     },
     body: JSON.stringify({
       model: env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
+      // `thread`는 스키마상 마지막 필드라 다른 필드보다 트렁케이션에 가장 취약함 — 500에서도 이미
+      // day_summary가 40~50% 확률로 잘렸던 전례(2026-08-03, PROGRESS.md)를 감안해 여유를 조금 더 둠.
+      // 실제 과금은 생성된 토큰 수 기준이라 상한을 올려도 비용은 거의 그대로.
+      max_tokens: 650,
       system: SYSTEM_PROMPT,
       messages: [
         {

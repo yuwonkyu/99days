@@ -11,6 +11,7 @@ import { AITurnResponse } from '../types/game';
 const LIMITS = {
   choice: 25,
   daySummary: 30,
+  threadSummary: 40,
 };
 
 /** Cuts at the last word boundary before `max` so we never split mid-word; always marks truncation with "…". */
@@ -27,6 +28,9 @@ export function clampTurnResponse(response: AITurnResponse): AITurnResponse {
     ...response,
     choices: response.choices.map((choice) => clamp(choice, LIMITS.choice)),
     day_summary: clamp(response.day_summary, LIMITS.daySummary),
+    thread: response.thread?.summary
+      ? { ...response.thread, summary: clamp(response.thread.summary, LIMITS.threadSummary) }
+      : response.thread,
   };
 }
 

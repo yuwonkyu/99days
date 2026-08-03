@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   // over-constrained CSS box — the image ends up pinned at native size in the
   // top-left corner instead of covering the screen. Forcing 100%/100% here wins.
   backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
   },

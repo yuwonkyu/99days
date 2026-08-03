@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AITurnResponse, TurnContext } from '../types/game';
+import { AITurnResponse, ThreadUpdate, TurnContext } from '../types/game';
 
 const WORKER_URL = process.env.EXPO_PUBLIC_AI_WORKER_URL;
 const SESSION_KEY = '99days:sessionId';
@@ -33,6 +33,21 @@ function isValidAITurnResponse(value: unknown): value is Record<string, unknown>
   return true;
 }
 
+const THREAD_STATUSES = new Set(['none', 'continuing', 'resolved']);
+
+/** Same truncation tolerance as the rest of the response — a malformed/missing thread just means "no thread", never a rejected turn. */
+function normalizeThread(v: unknown): ThreadUpdate | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const t = v as Record<string, unknown>;
+  if (typeof t.status !== 'string' || !THREAD_STATUSES.has(t.status)) return undefined;
+  if (t.status === 'continuing' && (typeof t.summary !== 'string' || !t.summary.trim())) return undefined;
+  return {
+    status: t.status as ThreadUpdate['status'],
+    summary: typeof t.summary === 'string' ? t.summary : undefined,
+    category: typeof t.category === 'string' ? t.category : undefined,
+  };
+}
+
 function normalizeAITurnResponse(v: Record<string, unknown>): AITurnResponse {
   const outcome = typeof v.outcome === 'string' ? v.outcome : undefined;
   const situation = v.situation as string;
@@ -43,6 +58,7 @@ function normalizeAITurnResponse(v: Record<string, unknown>): AITurnResponse {
     outcome,
     stat_changes: typeof v.stat_changes === 'object' && v.stat_changes !== null ? (v.stat_changes as AITurnResponse['stat_changes']) : {},
     day_summary: typeof v.day_summary === 'string' ? v.day_summary : daySummarySource,
+    thread: normalizeThread(v.thread),
   };
 }
 

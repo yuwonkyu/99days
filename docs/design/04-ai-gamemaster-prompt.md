@@ -42,6 +42,11 @@
 - sceneMode(외출/거처): "외출"이면 여정·순찰·사냥·교역·탐색처럼 밖으로 나가는 성격의 사건을, "거처"면 방어·은신·은폐·거주·피난처럼 머무는 성격의 사건을 자연스럽게 녹여낼 것 (단어를 그대로 쓰라는 뜻이 아니라 그 성격의 상황을 만들라는 뜻)
 - avoidRepeat가 true면 recentTags와 겹치지 않는 새로운 장소·인물·사건을 반드시 등장시킬 것
 
+[이야기 흐름(단편/장편) 안내 - turnContext.activeThread 활용]
+- activeThread가 있으면: 이번 situation은 그 인물·장소·갈등을 반드시 그대로 이어서 다룰 것 — 관계없는 새 사건으로 갑자기 전환하는 것 절대 금지. 오늘로 그 사안이 끝나면 thread.status를 "resolved"로, 아직 진행 중이면 "continuing"으로 하고 summary를 지금 상태에 맞게 갱신할 것. activeThread.turns가 4 이상이면 되도록 이번이나 다음 턴 안에 매듭지을 것 (무한정 끌지 말 것)
+- activeThread가 없으면: situation은 기본적으로 그날 안에 끝나는 단편으로 다루고 thread.status는 "none"으로 둘 것. 다만 가끔(매 턴은 아니고 이따금) 다음 날로 이어질 만한 여운이 남는 사건이면 thread.status를 "continuing"으로 하고 summary/category를 채워 짧은 연속 사건(보통 2~5일)을 새로 시작해도 좋음 — 매번 새로 시작할 필요는 없음
+- thread.summary는 20자 이내로 "누구와 무엇이 진행 중인지"만 담을 것 (예: "숲 파수꾼과의 대치")
+
 [하루/시간 흐름 서술 원칙]
 - Day는 문자 그대로 24시간이 아니어도 된다. storyDirective.timeSkip이 true면 timeSkipLabel(예: "몇 주", "몇 년")만큼 시간이 흘렀음을 situation 도입부에 자연스럽게 녹여 서술할 것. false면 전날 바로 다음으로 이어지는 하루로 서술
 - timeSkip이 "몇 년"처럼 큰 폭이면 stat_changes.AGE로 나이 증가를 정수로 반영해도 된다 (작은 폭이면 생략)
@@ -57,7 +62,8 @@
   "choices": ["string", ...],
   "outcome": "string (선택 후에만)",
   "stat_changes": { "STR": 0, "INT": 0, "AGI": 0, "LUK": 0, "HP": 0, "AGE": 0 },
-  "day_summary": "string (한 줄, 복귀 시 요약용)"
+  "day_summary": "string (한 줄, 복귀 시 요약용)",
+  "thread": { "status": "none | continuing | resolved", "summary": "string (continuing이면 필수)", "category": "string (선택)" }
 }
 ```
 
@@ -94,12 +100,28 @@
   자연스럽게 녹이고, 폭이 크면 `stat_changes.AGE`로 나이도 반영할 수 있다.
 - **감정 다양성**: 위험/갈등뿐 아니라 호감·우정·애정 같은 긍정적 관계 감정도 캐릭터 성격/상황에 맞게
   나오도록 시스템 프롬프트에 명시했다 (오프라인 폴백에는 `bond` 카테고리로 별도 반영, 아래 참고).
+- **activeThread (다일 스토리 스레드)**: AI에게 "직전 outcome과만 자연스럽게 이어질 것"을 지시해도,
+  실제로는 `recentDayLogs`가 30자짜리 요약 3개뿐이라 며칠 전 등장한 인물/사건을 모델이 기억하지
+  못하고 무관한 새 사건으로 튀는 문제가 있었다(예: 숲에서 만난 파수꾼과 헤어졌는데 다른 날 야생동물
+  조우 선택 직후 갑자기 그 파수꾼과 창고에서 대치하는 식). `GameState.activeThread`가 진행 중인
+  사안(요약/카테고리/시작일/경과 턴)을 명시적으로 들고 다니며 매 턴 `turnContext.activeThread`로
+  전달하고, 모델은 응답에 `thread.status`(`none`/`continuing`/`resolved`)로 그 사안을 계속 이어갈지
+  오늘 매듭지을지 답해야 한다 — 프롬프트 지시에만 기대지 않고 상태를 코드가 명시적으로 왕복시켜
+  드리프트를 막는 구조. `activeThread`가 있는 턴은 `storyFlow.ts`가 `avoidRepeat`/`timeSkip`도 강제로
+  끄므로, 다양성 유도 장치가 진행 중인 스레드와 충돌하지 않는다. **이 필드는 Cloudflare Worker의
+  `TOOL_SCHEMA`/`SYSTEM_PROMPT`에도 반영되어 있으므로, 코드 변경 후 `worker/` 디렉토리에서
+  `npx wrangler deploy`로 재배포해야 실제 AI 응답에 적용된다** (프론트엔드 GitHub Pages 배포와는
+  별도 절차).
 - 오프라인 폴백([offlineGenerator.ts](../../src/engine/offlineGenerator.ts))도 동일한 `sceneMode`로
   템플릿 풀을 필터링해, AI 없이도 최소한의 흐름을 유지한다. 다만 AI와 달리 매번 독립된 시드를 뽑기
   때문에 "거처에서 문을 확인하다가 갑자기 숲 가장자리"처럼 뜬금없게 느껴진다는 실플레이 피드백이
   있었다 — `buildTransitionPrefix()`가 2일차부터 시작 문구("다음 날," 또는 timeSkip이 있으면 "그로부터
   {timeSkipLabel}이 지나,")를 상황 앞에 붙여 최소한의 연결감을 준다(시드 자체에 이미 "이른 아침,"
-  같은 시간대 표현이 있으면 중복을 피해 생략).
+  같은 시간대 표현이 있으면 중복을 피해 생략). `activeThread`가 열려 있는 상태로 오프라인 폴백이 뽑히면
+  (오프라인 시드는 AI가 만든 스레드의 구체적 인물/장소를 이어 쓸 수 없으므로) 그 스레드를 조용히
+  무시하지 않고 "그 사이 {summary} 쪽 일은 잠시 소강상태로 접어들었다" 식의 한 줄로 명시적으로 닫은
+  뒤 새 시드로 넘어간다(`thread.status: "resolved"`로 반환) — 스레드가 소리 없이 증발하는 대신 항상
+  플레이어가 인지할 수 있게 마무리된다.
 - **결과가 뭘 뜻하는지 알 수 없다는 피드백**(예: 발자국을 조사했는데 어떻게 끝났는지 모름)에 대응해,
   선택지가 우리 시드 뱅크에서 나온 것이면(`inferChoiceCategory`로 exact-match 역추적) 그 시드의
   카테고리에 맞는 구체적 결말(`CATEGORY_RESOLUTIONS`, 카테고리×티어별 문구)을 쓴다. 예:
