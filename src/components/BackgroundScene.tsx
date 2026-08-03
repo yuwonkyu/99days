@@ -30,8 +30,21 @@ export default function BackgroundScene({ tag, children }: Props) {
   return (
     <View style={StyleSheet.absoluteFill}>
       <LinearGradient colors={theme.gradient} style={StyleSheet.absoluteFill} />
-      <Image source={BACKGROUND_IMAGES[tag]} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Image source={BACKGROUND_IMAGES[tag]} style={styles.backgroundImage} resizeMode="cover" />
       {children}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // react-native-web bakes the require()'d asset's real pixel size (e.g. 768x1376)
+  // into the Image's wrapper div. StyleSheet.absoluteFill alone only sets
+  // top/left/right/bottom: 0, which loses to that explicit width/height in an
+  // over-constrained CSS box — the image ends up pinned at native size in the
+  // top-left corner instead of covering the screen. Forcing 100%/100% here wins.
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+});
