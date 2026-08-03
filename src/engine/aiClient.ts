@@ -15,16 +15,35 @@ async function getSessionId(): Promise<string> {
   return id;
 }
 
-function isValidAITurnResponse(value: unknown): value is AITurnResponse {
+/**
+ * Only situation/choices are load-bearing for rendering a turn — everything else
+ * (stat_changes, day_summary) has a safe default. The Worker forces tool_choice
+ * on `emit_turn`, but max_tokens truncation still regularly drops trailing
+ * fields (usually day_summary, sometimes stat_changes too) from otherwise-good
+ * responses; rejecting those outright wasted the AI call and fell back to the
+ * offline generator far more often than an actual network/schema failure would.
+ */
+function isValidAITurnResponse(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== 'object') return false;
   const v = value as Record<string, unknown>;
   if (typeof v.situation !== 'string' || v.situation.trim().length === 0) return false;
   if (!Array.isArray(v.choices) || v.choices.length < 2 || v.choices.length > 4) return false;
   if (!v.choices.every((c) => typeof c === 'string' && c.trim().length > 0)) return false;
-  if (typeof v.day_summary !== 'string') return false;
   if (v.outcome !== undefined && typeof v.outcome !== 'string') return false;
-  if (typeof v.stat_changes !== 'object' || v.stat_changes === null) return false;
   return true;
+}
+
+function normalizeAITurnResponse(v: Record<string, unknown>): AITurnResponse {
+  const outcome = typeof v.outcome === 'string' ? v.outcome : undefined;
+  const situation = v.situation as string;
+  const daySummarySource = outcome ?? situation;
+  return {
+    situation,
+    choices: v.choices as string[],
+    outcome,
+    stat_changes: typeof v.stat_changes === 'object' && v.stat_changes !== null ? (v.stat_changes as AITurnResponse['stat_changes']) : {},
+    day_summary: typeof v.day_summary === 'string' ? v.day_summary : daySummarySource,
+  };
 }
 
 /**
@@ -57,7 +76,7 @@ export async function requestAiTurn(context: TurnContext): Promise<AITurnRespons
     if (!isValidAITurnResponse(data)) {
       throw new AiUnavailableError('Worker response failed schema validation');
     }
-    return data;
+    return normalizeAITurnResponse(data);
   } catch (err) {
     if (err instanceof AiUnavailableError) throw err;
     throw new AiUnavailableError(`AI request failed: ${(err as Error).message}`);
