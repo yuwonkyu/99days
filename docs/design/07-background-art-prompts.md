@@ -293,4 +293,5 @@ alley:         narrow gap between two close-set stone-and-timber buildings, high
 - [x] Phase 6: `SceneTag`에 `cell`/`stairs`/`alley`/`visitation` 4종 추가, 코드 전체(`SCENE_THEMES`/`KEYWORD_TAGS`/`BACKGROUND_IMAGES`) 반영 및 브라우저 렌더링 확인(2026-08-04)
 - [x] Phase 6: `cell`/`visitation` 실제 아트 제작 완료(2026-08-04 확인) — `stairs`/`alley`는 아직 1x1 투명 PNG 자리표시자, 제미니 한도 초기화 후 이어서 제작 예정
 - [ ] Phase 6: 새 4종에도 Phase 5 무드 소분류 적용할지는 실제 플레이 빈도 보고 나중에 결정
+- [x] Phase 6.5: 키워드 커버리지 감사(2026-08-04, 실제 플레이 스크린샷 신고 기반) — Day 67 "감옥 관사" 장면이 `cell` 키워드에 정작 가장 흔한 단어인 `감옥`이 빠져있어 `city` 기본값으로 잘못 표시되던 걸 발견. 같은 방식으로 여러 태그를 다시 훑어 자연스럽게 나올 법한 동의어를 보강: `cell`+=`감옥`/`수감`/`죄수`, `visitation`+=`접견`/`접견실`, `market`+=`장터`/`좌판`/`저잣거리`(오프라인 시드 3개가 이미 이 단어를 쓰고 있었는데도 안 걸리고 있었음), `danger`+=`위협`/`매복`/`강도`/`흉기`, `indoor`+=`관사`/`숙소`/`여관`. AI가 자유롭게 쓰는 어휘라 40개 시드만으론 다 못 잡아서, 앞으로도 실제 플레이에서 배경-지문 불일치가 보이면 여기 계속 추가해야 함
 - [ ] 조합이 늘어날 때마다 이 문서의 우선순위 표도 함께 갱신

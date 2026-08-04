@@ -62,17 +62,17 @@ export const SCENE_THEMES: Record<SceneTag, SceneTheme> = {
 const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
   // 장소가 특정되는 키워드(감방/계단/골목/면회실)는 danger 등 넓은 무드 키워드보다 앞에 둬서
   // 우선 매칭되게 한다 — "감방에서 다투다" 같은 장면은 danger보다 cell 배경이 더 구체적으로 맞다.
-  { tag: 'cell', keywords: ['감방', '독방', '옥사', '철창'] },
-  { tag: 'visitation', keywords: ['면회실', '면회'] },
+  { tag: 'cell', keywords: ['감옥', '감방', '독방', '옥사', '철창', '수감', '죄수'] },
+  { tag: 'visitation', keywords: ['면회실', '면회', '접견실', '접견'] },
   { tag: 'stairs', keywords: ['계단', '층계'] },
   { tag: 'alley', keywords: ['골목'] },
   // '피'/'적' 같은 한 글자 키워드는 '피하다'/'규칙적'처럼 무관한 흔한 단어에도 부분 문자열로
   // 걸려 오탐이 잦아('규칙적이다'가 'danger'로 잘못 분류되는 식) 더 구체적인 복합어로 대체.
-  { tag: 'danger', keywords: ['위험', '핏자국', '피투성이', '유혈', '싸움', '칼', '화살', '습격', '도적', '산적', '돌연변이', '비명'] },
+  { tag: 'danger', keywords: ['위험', '위협', '매복', '강도', '흉기', '핏자국', '피투성이', '유혈', '싸움', '칼', '화살', '습격', '도적', '산적', '돌연변이', '비명'] },
   { tag: 'forest', keywords: ['숲', '나무', '수풀', '덤불', '사냥', '산속', '야생'] },
-  { tag: 'market', keywords: ['시장', '상인', '가판', '노점', '흥정', '교역'] },
+  { tag: 'market', keywords: ['시장', '장터', '좌판', '저잣거리', '상인', '가판', '노점', '흥정', '교역'] },
   { tag: 'social', keywords: ['잔치', '연회', '대화', '만남', '모임', '축제', '술집'] },
-  { tag: 'indoor', keywords: ['방', '집', '거처', '실내', '오두막', '창고', '침대'] },
+  { tag: 'indoor', keywords: ['방', '집', '거처', '관사', '숙소', '여관', '실내', '오두막', '창고', '침대'] },
 ];
 
 export function inferSceneTag(situationText: string): SceneTag {
