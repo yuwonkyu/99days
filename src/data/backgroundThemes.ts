@@ -1,4 +1,4 @@
-export type SceneTag = 'city' | 'forest' | 'market' | 'danger' | 'social' | 'indoor';
+export type SceneTag = 'city' | 'forest' | 'market' | 'danger' | 'social' | 'indoor' | 'cell' | 'stairs' | 'alley' | 'visitation';
 
 export interface SceneTheme {
   tag: SceneTag;
@@ -37,9 +37,35 @@ export const SCENE_THEMES: Record<SceneTag, SceneTheme> = {
     label: '실내',
     gradient: ['#3a2f26', '#6e5a45'],
   },
+  cell: {
+    tag: 'cell',
+    label: '감방',
+    gradient: ['#262a2e', '#4a5158'],
+  },
+  stairs: {
+    tag: 'stairs',
+    label: '계단',
+    gradient: ['#2e2c2a', '#5c5750'],
+  },
+  alley: {
+    tag: 'alley',
+    label: '골목길',
+    gradient: ['#24222a', '#484454'],
+  },
+  visitation: {
+    tag: 'visitation',
+    label: '면회실',
+    gradient: ['#2a2e38', '#545c6e'],
+  },
 };
 
 const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
+  // 장소가 특정되는 키워드(감방/계단/골목/면회실)는 danger 등 넓은 무드 키워드보다 앞에 둬서
+  // 우선 매칭되게 한다 — "감방에서 다투다" 같은 장면은 danger보다 cell 배경이 더 구체적으로 맞다.
+  { tag: 'cell', keywords: ['감방', '독방', '옥사', '철창'] },
+  { tag: 'visitation', keywords: ['면회실', '면회'] },
+  { tag: 'stairs', keywords: ['계단', '층계'] },
+  { tag: 'alley', keywords: ['골목'] },
   // '피'/'적' 같은 한 글자 키워드는 '피하다'/'규칙적'처럼 무관한 흔한 단어에도 부분 문자열로
   // 걸려 오탐이 잦아('규칙적이다'가 'danger'로 잘못 분류되는 식) 더 구체적인 복합어로 대체.
   { tag: 'danger', keywords: ['위험', '핏자국', '피투성이', '유혈', '싸움', '칼', '화살', '습격', '도적', '산적', '돌연변이', '비명'] },

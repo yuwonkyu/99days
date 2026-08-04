@@ -34,20 +34,35 @@ export function clampTurnResponse(response: AITurnResponse): AITurnResponse {
   };
 }
 
+/** True when `s` has an unmatched opening `"` — i.e. we're still inside quoted dialogue. */
+function hasOpenQuote(s: string): boolean {
+  return (s.match(/"/g) ?? []).length % 2 !== 0;
+}
+
 /**
  * Splits text into sentence-safe reading pages (never cuts mid-sentence, let
  * alone mid-word) for the book-style "다음" reading UI. Groups whole sentences
  * up to ~maxCharsPerPage; a single sentence longer than that just becomes its
- * own (longer) page rather than being cut.
+ * own (longer) page rather than being cut. Never breaks a page while a `"..."`
+ * quote is still open, even past maxCharsPerPage — the sentence-boundary regex
+ * below splits on every `.!?`, including ones inside dialogue, so without this
+ * guard a multi-sentence quote gets its closing `"` pushed to the next page,
+ * which reads as the dialogue being abruptly cut off even though nothing is
+ * actually dropped.
+ *
+ * The sentence regex requires the trailing `"|)|]` group (not just whitespace/end) because
+ * Korean closes a quote right against the sentence-ending punctuation with no space —
+ * `말해줘."` — and the previous version's `(\s+|$)` couldn't match there, silently dropping
+ * that whole sentence from the output (not just mis-paginating it, actually losing the text).
  */
 export function paginate(text: string | undefined, maxCharsPerPage = 110): string[] {
   if (!text) return [];
-  const sentences = (text.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g) ?? [text]).map((s) => s.trim()).filter(Boolean);
+  const sentences = (text.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) ?? [text]).map((s) => s.trim()).filter(Boolean);
   const pages: string[] = [];
   let current = '';
   for (const sentence of sentences) {
     const candidate = current ? `${current} ${sentence}` : sentence;
-    if (current && candidate.length > maxCharsPerPage) {
+    if (current && candidate.length > maxCharsPerPage && !hasOpenQuote(current)) {
       pages.push(current);
       current = sentence;
     } else {

@@ -233,6 +233,50 @@ city_fear:     empty village street at night, a single distant figure or shadow 
 `od-mystery-1` 시드를 `danger`로 잘못 분류하고 있는 걸 발견해 함께 고쳤다 — 자세한 내용은 아래
 체크리스트 참고.
 
+### Phase 6 — 새 SceneTag 4종 추가 (2026-08-04, 사용자 플레이테스트 피드백)
+
+AI 게임마스터가 만드는 장면이 기존 6종(city/forest/market/danger/social/indoor)으로 다 안 덮이는
+경우가 실제로 나왔다 — 감옥 탈출 스토리 라인에서 감방/면회실/계단/골목길 장면이 계속 `city`
+기본 이미지로 떨어지고 있었다. `SceneTag`를 4종 늘렸다: `cell`(감방), `visitation`(면회실),
+`stairs`(계단), `alley`(골목길). 키워드는 `danger` 등 넓은 무드 태그보다 먼저 검사해 장소가
+구체적으로 특정되면 우선 매칭되게 했다([backgroundThemes.ts](../../src/data/backgroundThemes.ts)의
+`KEYWORD_TAGS` 순서 참고).
+
+세계관 규칙(전근대 문명, 현대 기술 없음)을 지키기 위해 면회실은 유리 칸막이가 아니라 창살/나무
+격자로 묘사했다.
+
+| 파일명 | SceneTag | 키워드 | 상황 예시 |
+|---|---|---|---|
+| `cell.png` | cell | 감방/독방/옥사/철창 | 좁은 감방, 차가운 돌바닥 |
+| `visitation.png` | visitation | 면회실/면회 | 창살 너머로 대화하는 면회 장면 |
+| `stairs.png` | stairs | 계단/층계 | 좁고 가파른 돌계단 |
+| `alley.png` | alley | 골목 | 건물 사이 좁은 골목길 |
+
+```
+cell:          damp stone prison cell, rough-hewn walls, a small barred window letting in a
+               thin shaft of light, sparse straw bedding in the corner, oppressive confined
+               atmosphere, cold desaturated blue-grey tones
+
+visitation:    bare stone visiting room split by a row of iron bars or a wooden lattice
+               grille (no glass), two simple wooden stools facing each other across the
+               divide, dim light from a high narrow window, quietly tense subdued mood, cold
+               muted grey-blue tones
+
+stairs:        narrow worn stone stairwell, steps disappearing into shadow above and below,
+               a single shaft of light cutting across the steps, liminal transitional
+               atmosphere, muted grey-brown tones
+
+alley:         narrow gap between two close-set stone-and-timber buildings, high walls
+               looming on both sides, dim light filtering in from the far end, faint sense
+               of being boxed in, muted cool urban tones
+```
+
+**구현 완료(2026-08-04)**: `SceneTag` 유니온 타입, `SCENE_THEMES`, `KEYWORD_TAGS`,
+[BackgroundScene.tsx](../../src/components/BackgroundScene.tsx)의 `BACKGROUND_IMAGES`까지 전부
+갱신, 브라우저에서 4종 모두 정상 렌더링 확인. `cell`/`visitation`은 실제 아트로 교체 완료(2026-08-04).
+`stairs`/`alley`는 아직 1x1 투명 PNG 자리표시자 — 제미니 이미지 생성 한도 초기화 후 이어서 제작 예정
+(프롬프트는 위 표에 이미 확정돼 있음). 무드(Phase 5) 소분류는 아직 이 4종에 적용 안 함 — 필요해지면 추가.
+
 ## 다음 세션 체크리스트
 
 - [x] Phase 1: 조합 우선순위 표 작성 — offline 시드 40개 실측 기반으로 SceneTag 6종 전부 확정(2026-08-03)
@@ -246,4 +290,7 @@ city_fear:     empty village street at night, a single distant figure or shadow 
 - [x] Phase 5 2차 배치: `city_joy`/`market_joy`/`social_joy`/`city_sorrow`/`danger_anger`/`forest_fear` 프롬프트 확정 및 `MOOD_BACKGROUND_IMAGES`에 연결(2026-08-04) — `city_sorrow`는 `sh-work-2`(도구 고장) 실측으로 확인된 실사용 조합
 - [x] Phase 5 3차 배치: `city_fear` 프롬프트 확정 및 연결(2026-08-04) — `od-horror-2`/`od-horror-3`/`sh-horror-2` 3개 시드 실측으로 확인된 마지막 갭. 나머지 그리드 칸은 실측 근거 없어 보류
 - [x] Phase 5: 우선순위 13장(`city_anger`/`city_joy`/`city_sorrow`/`city_fear`/`indoor_anger`/`indoor_sorrow`/`indoor_fear`/`market_anger`/`market_joy`/`social_anger`/`social_joy`/`danger_anger`/`forest_fear`) 실제 아트 제작 완료, `assets/backgrounds/`에 반영 및 브라우저에서 렌더링 확인(2026-08-04)
+- [x] Phase 6: `SceneTag`에 `cell`/`stairs`/`alley`/`visitation` 4종 추가, 코드 전체(`SCENE_THEMES`/`KEYWORD_TAGS`/`BACKGROUND_IMAGES`) 반영 및 브라우저 렌더링 확인(2026-08-04)
+- [x] Phase 6: `cell`/`visitation` 실제 아트 제작 완료(2026-08-04 확인) — `stairs`/`alley`는 아직 1x1 투명 PNG 자리표시자, 제미니 한도 초기화 후 이어서 제작 예정
+- [ ] Phase 6: 새 4종에도 Phase 5 무드 소분류 적용할지는 실제 플레이 빈도 보고 나중에 결정
 - [ ] 조합이 늘어날 때마다 이 문서의 우선순위 표도 함께 갱신
