@@ -1,10 +1,11 @@
 import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SceneTag, SCENE_THEMES } from '../data/backgroundThemes';
+import { SceneTag, SceneMood, SCENE_THEMES } from '../data/backgroundThemes';
 
 interface Props {
   tag: SceneTag;
+  mood?: SceneMood;
   children?: React.ReactNode;
 }
 
@@ -25,12 +26,43 @@ const BACKGROUND_IMAGES: Record<SceneTag, number> = {
   indoor: require('../../assets/backgrounds/indoor.png'),
 };
 
-export default function BackgroundScene({ tag, children }: Props) {
+/**
+ * Doc 07 Phase 5: mood-specific variants for the highest-contrast (tag, mood) pairs only —
+ * not all 6×5 combos are authored. Same require() literal-string constraint as above, so this
+ * stays a flat, explicitly-listed map rather than a computed one. Any (tag, mood) pair missing
+ * here falls back to the tag's base "calm" image below.
+ */
+const MOOD_BACKGROUND_IMAGES: Partial<Record<SceneTag, Partial<Record<SceneMood, number>>>> = {
+  city: {
+    anger: require('../../assets/backgrounds/city_anger.png'),
+    joy: require('../../assets/backgrounds/city_joy.png'),
+    sorrow: require('../../assets/backgrounds/city_sorrow.png'),
+    fear: require('../../assets/backgrounds/city_fear.png'),
+  },
+  indoor: {
+    anger: require('../../assets/backgrounds/indoor_anger.png'),
+    sorrow: require('../../assets/backgrounds/indoor_sorrow.png'),
+    fear: require('../../assets/backgrounds/indoor_fear.png'),
+  },
+  market: {
+    anger: require('../../assets/backgrounds/market_anger.png'),
+    joy: require('../../assets/backgrounds/market_joy.png'),
+  },
+  social: {
+    anger: require('../../assets/backgrounds/social_anger.png'),
+    joy: require('../../assets/backgrounds/social_joy.png'),
+  },
+  danger: { anger: require('../../assets/backgrounds/danger_anger.png') },
+  forest: { fear: require('../../assets/backgrounds/forest_fear.png') },
+};
+
+export default function BackgroundScene({ tag, mood, children }: Props) {
   const theme = SCENE_THEMES[tag];
+  const source = (mood && MOOD_BACKGROUND_IMAGES[tag]?.[mood]) ?? BACKGROUND_IMAGES[tag];
   return (
     <View style={StyleSheet.absoluteFill}>
       <LinearGradient colors={theme.gradient} style={StyleSheet.absoluteFill} />
-      <Image source={BACKGROUND_IMAGES[tag]} style={styles.backgroundImage} resizeMode="cover" />
+      <Image source={source} style={styles.backgroundImage} resizeMode="cover" />
       {children}
     </View>
   );

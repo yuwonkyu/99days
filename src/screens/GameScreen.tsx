@@ -10,7 +10,7 @@ import { applyStatDelta } from '../engine/statGen';
 import { sampleLegacyMentions, saveLegacyRecord } from '../engine/legacyStore';
 import { buildReturnSummary, clearGameState, loadGameState, saveGameState } from '../engine/gameStateStore';
 import { paginate } from '../engine/textLimits';
-import { inferSceneTag } from '../data/backgroundThemes';
+import { inferMood, inferSceneTag } from '../data/backgroundThemes';
 import BackgroundScene from '../components/BackgroundScene';
 import DayProgressBar from '../components/DayProgressBar';
 import ChoiceList from '../components/ChoiceList';
@@ -234,9 +234,10 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
   }
 
   const sceneTag = inferSceneTag(gameState.currentSituation);
+  const sceneMood = inferMood(gameState.currentSituation);
 
   return (
-    <BackgroundScene tag={sceneTag}>
+    <BackgroundScene tag={sceneTag} mood={sceneMood}>
       <View style={styles.overlay}>
         <View style={styles.topBar}>
           <DayProgressBar day={gameState.day} totalDays={TOTAL_DAYS} />

@@ -170,7 +170,10 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-mystery-2',
       mode: 'outdoor',
       category: 'mystery',
-      situation: `길가에 ${pick(OMENS)}이(가) 놓여 있다. 누군가 일부러 두고 간 것 같은 느낌을 지울 수 없다.`,
+      situation: (() => {
+        const omen = pick(OMENS);
+        return `길가에 ${omen}${iGa(omen)} 놓여 있다. 누군가 일부러 두고 간 것 같은 느낌을 지울 수 없다.`;
+      })(),
       choices: [
         { text: '가까이 다가가 살펴본다', lean: 'risky' },
         { text: '주변에 아는 사람이 있는지 물어본다', lean: 'neutral' },
@@ -194,7 +197,10 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-horror-1',
       mode: 'outdoor',
       category: 'horror',
-      situation: `인적 없는 길, ${name}${은는} 등 뒤에서 ${pick(NOISES)}을(를) 듣는다. 돌아봐도 아무도 없다.`,
+      situation: (() => {
+        const noise = pick(NOISES);
+        return `인적 없는 길, ${name}${은는} 등 뒤에서 ${noise}${eulReul(noise)} 듣는다. 돌아봐도 아무도 없다.`;
+      })(),
       choices: [
         { text: '걸음을 재촉해 벗어난다', lean: 'safe' },
         { text: '숨을 죽이고 소리의 정체를 살핀다', lean: 'risky' },
@@ -404,7 +410,10 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'sh-horror-1',
       mode: 'shelter',
       category: 'horror',
-      situation: `벽 너머에서 ${pick(NOISES)}이(가) 밤새 그치지 않는다. 옆방은 분명 비어 있을 텐데.`,
+      situation: (() => {
+        const noise = pick(NOISES);
+        return `벽 너머에서 ${noise}${iGa(noise)} 밤새 그치지 않는다. 옆방은 분명 비어 있을 텐데.`;
+      })(),
       choices: [
         { text: '벽에 귀를 대고 자세히 들어본다', lean: 'risky' },
         { text: '이불을 뒤집어쓰고 아침을 기다린다', lean: 'safe' },
