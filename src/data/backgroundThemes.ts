@@ -69,17 +69,23 @@ const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
   // '피'/'적' 같은 한 글자 키워드는 '피하다'/'규칙적'처럼 무관한 흔한 단어에도 부분 문자열로
   // 걸려 오탐이 잦아('규칙적이다'가 'danger'로 잘못 분류되는 식) 더 구체적인 복합어로 대체.
   { tag: 'danger', keywords: ['위험', '위협', '매복', '강도', '흉기', '핏자국', '피투성이', '유혈', '싸움', '칼', '화살', '습격', '도적', '산적', '돌연변이', '비명'] },
-  { tag: 'forest', keywords: ['숲', '나무', '수풀', '덤불', '사냥', '산속', '야생'] },
+  { tag: 'forest', keywords: ['숲', '나무', '수풀', '덤불', '사냥', '산속', '산길', '야생'] },
   { tag: 'market', keywords: ['시장', '장터', '좌판', '저잣거리', '상인', '가판', '노점', '흥정', '교역'] },
   { tag: 'social', keywords: ['잔치', '연회', '대화', '만남', '모임', '축제', '술집'] },
   { tag: 'indoor', keywords: ['방', '집', '거처', '관사', '숙소', '여관', '실내', '오두막', '창고', '침대'] },
 ];
 
-export function inferSceneTag(situationText: string): SceneTag {
+/**
+ * `sceneMode` is an optional fallback, not a keyword source — many `shelter`(거처) seeds/AI
+ * turns describe being home without ever writing "방"/"집" (e.g. "문을 두드린다", "짐을 정리하던")
+ * and were defaulting all the way to `city`. When no keyword matches and the turn's own
+ * sceneMode says "shelter", `indoor` is a much safer guess than the generic village street.
+ */
+export function inferSceneTag(situationText: string, sceneMode?: 'outdoor' | 'shelter'): SceneTag {
   for (const { tag, keywords } of KEYWORD_TAGS) {
     if (keywords.some((k) => situationText.includes(k))) return tag;
   }
-  return 'city';
+  return sceneMode === 'shelter' ? 'indoor' : 'city';
 }
 
 /**

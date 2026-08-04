@@ -52,44 +52,65 @@ const GENERIC_OUTCOME_TEXT: Record<OutcomeTier, (choice: string, lean: ChoiceLea
 };
 
 /**
+ * `lean` is set only when the phrasing describes an action that contradicts other leans — e.g.
+ * "맞서 싸우다" (fought back) can't be the outcome of a `safe` choice like "몸을 숨기고 기다린다"
+ * (hide and wait). Left undefined when the line reads fine regardless of what the player chose.
+ */
+interface CategoryResolution {
+  text: string;
+  lean?: ChoiceLean;
+}
+
+/**
  * Doc 04: "발자국을 조사했는데 어떻게 끝난 건지 모르겠다" 피드백 — 결과를 lean 기반 일반 문구가
  * 아니라, 그 선택이 나온 시드의 카테고리에 맞는 구체적인 결말로 서술한다.
+ *
+ * `buildOutcome` used to `pick()` from these pools ignoring `lean` entirely, so a `safe`-leaning
+ * choice like "hide and wait" could resolve to "fought back and got badly hurt" — the resolution
+ * text contradicting the actual choice. Entries tagged with `lean` are now only offered to a
+ * matching choice.
  */
-const CATEGORY_RESOLUTIONS: Record<SituationCategory, Record<OutcomeTier, string[]>> = {
+const CATEGORY_RESOLUTIONS: Record<SituationCategory, Record<OutcomeTier, CategoryResolution[]>> = {
   danger: {
-    good: ['침착하게 대응해 위험을 완전히 피했다.', '예상보다 수월하게 위기를 넘기고 무사히 벗어났다.'],
-    neutral: ['아슬아슬하게 위기를 넘겼다. 별다른 피해는 없었다.'],
-    bad: ['위험에 휘말려 공격받았다. 상처를 입고 간신히 몸을 피했다.', '맞서 싸우다 크게 다쳤다.'],
+    good: [{ text: '침착하게 대응해 위험을 완전히 피했다.' }, { text: '예상보다 수월하게 위기를 넘기고 무사히 벗어났다.' }],
+    neutral: [{ text: '아슬아슬하게 위기를 넘겼다. 별다른 피해는 없었다.' }],
+    bad: [
+      { text: '위험에 휘말려 공격받았다. 상처를 입고 간신히 몸을 피했다.' },
+      { text: '맞서 싸우다 크게 다쳤다.', lean: 'risky' },
+    ],
   },
   work: {
-    good: ['생각보다 수월하게 일을 마무리했다.', '뜻밖의 이득을 챙겼다.'],
-    neutral: ['별다른 성과도 손해도 없이 하루가 지나갔다.'],
-    bad: ['일이 꼬여 손해를 봤다.', '실수가 겹쳐 하루를 허비했다.'],
+    good: [{ text: '생각보다 수월하게 일을 마무리했다.' }, { text: '뜻밖의 이득을 챙겼다.' }],
+    neutral: [{ text: '별다른 성과도 손해도 없이 하루가 지나갔다.' }],
+    bad: [{ text: '일이 꼬여 손해를 봤다.' }, { text: '실수가 겹쳐 하루를 허비했다.' }],
   },
   social: {
-    good: ['좋은 인상을 남기며 관계가 한 뼘 가까워졌다.'],
-    neutral: ['별다른 진전 없이 대화가 끝났다.'],
-    bad: ['분위기가 서먹해졌다.', '괜한 오해를 사고 말았다.'],
+    good: [{ text: '좋은 인상을 남기며 관계가 한 뼘 가까워졌다.' }],
+    neutral: [{ text: '별다른 진전 없이 대화가 끝났다.' }],
+    bad: [{ text: '분위기가 서먹해졌다.' }, { text: '괜한 오해를 사고 말았다.' }],
   },
   mystery: {
-    good: ['끝까지 쫓아 흥미로운 사실을 알아냈다.', '의문을 말끔히 해소하고 홀가분하게 발길을 돌렸다.'],
-    neutral: ['끝까지 확인했지만 별다른 단서를 찾지 못했다.', '결국 아무것도 알아내지 못한 채 발길을 돌렸다.'],
-    bad: ['쫓다가 위험한 존재와 정면으로 마주쳐 놀란 가슴을 쓸어내리며 도망쳤다.', '괜한 일에 휘말려 곤란해졌다.'],
+    good: [{ text: '끝까지 쫓아 흥미로운 사실을 알아냈다.' }, { text: '의문을 말끔히 해소하고 홀가분하게 발길을 돌렸다.' }],
+    neutral: [{ text: '끝까지 확인했지만 별다른 단서를 찾지 못했다.' }, { text: '결국 아무것도 알아내지 못한 채 발길을 돌렸다.' }],
+    bad: [
+      { text: '괜한 일에 휘말려 곤란해졌다.' },
+      { text: '쫓다가 위험한 존재와 정면으로 마주쳐 놀란 가슴을 쓸어내리며 도망쳤다.', lean: 'risky' },
+    ],
   },
   horror: {
-    good: ['침착하게 상황을 파악하고 무사히 벗어났다.'],
-    neutral: ['별일 아니었다는 걸 확인하고 나서야 겨우 진정했다.'],
-    bad: ['정체를 알 수 없는 무언가에 크게 놀라 온몸이 굳었다.'],
+    good: [{ text: '침착하게 상황을 파악하고 무사히 벗어났다.' }],
+    neutral: [{ text: '별일 아니었다는 걸 확인하고 나서야 겨우 진정했다.' }],
+    bad: [{ text: '정체를 알 수 없는 무언가에 크게 놀라 온몸이 굳었다.' }],
   },
   comedy: {
-    good: ['오히려 좋은 이야깃거리가 되어 웃으며 넘어갔다.'],
-    neutral: ['소동은 흐지부지 마무리됐다.'],
-    bad: ['상황이 더 꼬여 웃지 못할 하루가 됐다.'],
+    good: [{ text: '오히려 좋은 이야깃거리가 되어 웃으며 넘어갔다.' }],
+    neutral: [{ text: '소동은 흐지부지 마무리됐다.' }],
+    bad: [{ text: '상황이 더 꼬여 웃지 못할 하루가 됐다.' }],
   },
   bond: {
-    good: ['마음이 한층 가까워진 걸 느꼈다.'],
-    neutral: ['별다른 진전 없이 그저 그런 하루였다.'],
-    bad: ['어색해진 분위기에 마음이 무거워졌다.'],
+    good: [{ text: '마음이 한층 가까워진 걸 느꼈다.' }],
+    neutral: [{ text: '별다른 진전 없이 그저 그런 하루였다.' }],
+    bad: [{ text: '어색해진 분위기에 마음이 무거워졌다.' }],
   },
 };
 
@@ -137,8 +158,10 @@ function buildThreadClosurePrefix(summary: string | undefined): string {
 /** category를 알면(=어제 선택이 우리 시드에서 나왔으면) 그 맥락에 맞는 구체적 결말을, 모르면 lean 기반 일반 문구를 쓴다. */
 function buildOutcome(choice: string, lean: ChoiceLean, tier: OutcomeTier, category: SituationCategory | null): string {
   if (category) {
-    const resolution = pick(CATEGORY_RESOLUTIONS[category][tier]);
-    return `"${choice}" 쪽을 택했다. ${resolution}`;
+    const pool = CATEGORY_RESOLUTIONS[category][tier];
+    const fitting = pool.filter((r) => !r.lean || r.lean === lean);
+    const resolution = pick(fitting.length > 0 ? fitting : pool);
+    return `"${choice}" 쪽을 택했다. ${resolution.text}`;
   }
   return GENERIC_OUTCOME_TEXT[tier](choice, lean);
 }

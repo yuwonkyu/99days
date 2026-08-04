@@ -233,7 +233,8 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
     );
   }
 
-  const sceneTag = inferSceneTag(gameState.currentSituation);
+  const currentSceneMode = gameState.recentSceneModes?.[gameState.recentSceneModes.length - 1];
+  const sceneTag = inferSceneTag(gameState.currentSituation, currentSceneMode);
   const sceneMood = inferMood(gameState.currentSituation);
 
   return (

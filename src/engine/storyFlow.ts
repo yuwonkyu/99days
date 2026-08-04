@@ -76,7 +76,7 @@ export function buildStoryDirective(params: {
 }): StoryDirective {
   const phase = getPhase(params.day, params.totalDays);
   const sceneMode = pickSceneMode(params.recentSceneModes);
-  const recentTags = params.recentDaySummaries.map(inferSceneTag);
+  const recentTags = params.recentDaySummaries.map((summary) => inferSceneTag(summary));
   const tagCounts = new Map<string, number>();
   recentTags.forEach((tag) => tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1));
   const avoidRepeat = !params.hasActiveThread && [...tagCounts.values()].some((count) => count >= 2);
