@@ -277,6 +277,38 @@ alley:         narrow gap between two close-set stone-and-timber buildings, high
 `stairs`/`alley`는 아직 1x1 투명 PNG 자리표시자 — 제미니 이미지 생성 한도 초기화 후 이어서 제작 예정
 (프롬프트는 위 표에 이미 확정돼 있음). 무드(Phase 5) 소분류는 아직 이 4종에 적용 안 함 — 필요해지면 추가.
 
+### Phase 7 — `office`(관공서/청사) 태그 추가 (2026-08-06, 사용자 플레이테스트 피드백)
+
+실제 플레이 스크린샷 제보: AI가 만든 "청사 뒤뜰로 향하는 좁은 돌길을 따라가면 행정 업무를 보는
+작은 사무실들이 있다. 윤쇠의 모습이 보이지 않는다"(서무 창고, 관리자 등 관공서 배경의 다일
+스토리)가 어두운 안개 낀 숲(`forest`) 배경으로 잘못 표시됨. 원인은 두 가지가 겹쳤다:
+
+1. `청사`/`관아`/`서무` 같은 장소 특정 키워드가 애초에 `KEYWORD_TAGS`에 없어 아무 항목에도
+   안 걸림.
+2. 이 situation 텍스트는 여러 문장(페이지)으로 구성돼 있는데, `inferSceneTag`는 화면에 지금
+   보이는 페이지가 아니라 **전체 원문**을 검사한다. 앞쪽 문장에 숲/산길 묘사가 섞여 있으면(이번
+   다일 스토리는 숲길을 지나 청사에 도착하는 여정으로 시작했다) `forest` 키워드가 먼저 걸려버려,
+   정작 지금 보여줘야 할 관공서 장면 대신 몇 문장 전 지나온 숲 배경이 뜬 것.
+
+Phase 6(`cell`/`visitation`/`stairs`/`alley`)와 동일한 패턴으로 대응 — 장소가 구체적으로 특정되는
+키워드는 `danger`/`forest` 같은 넓은 무드 키워드보다 먼저 검사되게 이미 배치돼 있으므로, 새 태그를
+그 그룹에 추가하면 2번 문제(먼저 나온 숲 묘사에 밀리는 것)도 함께 해결된다.
+
+| 파일명 | SceneTag | 키워드 | 상황 예시 |
+|---|---|---|---|
+| `office.png` | office | 청사/관아/관청/관공서/집무실/서무 | 관공서 복도·사무실에서 사람을 찾거나 서류를 확인하는 장면 |
+
+```
+office:        plain pre-industrial government hall interior, worn wooden desks stacked with
+               paper ledgers and scrolls, a long dim corridor leading toward small side rooms,
+               bureaucratic and slightly weary atmosphere, overcast light through a high narrow
+               window, muted slate-grey and faded brown tones
+```
+
+**미구현**: `office.png`는 아직 1x1 투명 PNG 자리표시자(다른 새 태그와 동일하게 `alley.png`를
+복사해 만듦) — 실제 아트로 같은 파일명 덮어쓰기만 하면 코드 변경 없이 반영됨. `KEYWORD_TAGS`/
+`SCENE_THEMES`/`BackgroundScene.tsx`의 `BACKGROUND_IMAGES`는 모두 갱신 완료, 타입체크 통과.
+
 ## 다음 세션 체크리스트
 
 - [x] Phase 1: 조합 우선순위 표 작성 — offline 시드 40개 실측 기반으로 SceneTag 6종 전부 확정(2026-08-03)
@@ -296,3 +328,4 @@ alley:         narrow gap between two close-set stone-and-timber buildings, high
 - [x] Phase 6.5: 키워드 커버리지 감사(2026-08-04, 실제 플레이 스크린샷 신고 기반) — Day 67 "감옥 관사" 장면이 `cell` 키워드에 정작 가장 흔한 단어인 `감옥`이 빠져있어 `city` 기본값으로 잘못 표시되던 걸 발견. 같은 방식으로 여러 태그를 다시 훑어 자연스럽게 나올 법한 동의어를 보강: `cell`+=`감옥`/`수감`/`죄수`, `visitation`+=`접견`/`접견실`, `market`+=`장터`/`좌판`/`저잣거리`(오프라인 시드 3개가 이미 이 단어를 쓰고 있었는데도 안 걸리고 있었음), `danger`+=`위협`/`매복`/`강도`/`흉기`, `indoor`+=`관사`/`숙소`/`여관`. AI가 자유롭게 쓰는 어휘라 40개 시드만으론 다 못 잡아서, 앞으로도 실제 플레이에서 배경-지문 불일치가 보이면 여기 계속 추가해야 함
 - [x] Phase 6.6: 정적 QA 감사(2026-08-04) — `buildSituationSeeds()`를 직접 실행해 40개 시드 전부(각 30회 샘플링)를 `inferSceneTag`/`inferMood`에 통과시켜 태그 분포를 전수 확인. `sh-*`(거처 모드) 18개 시드 전부가 "방"/"집" 같은 키워드 없이도 `city` 기본값으로 떨어지고 있던 걸 발견 — `inferSceneTag`에 `sceneMode` 힌트를 추가해 키워드가 하나도 안 걸렸을 때 `sceneMode === 'shelter'`면 `city` 대신 `indoor`로 폴백하게 함([GameScreen.tsx](../../src/screens/GameScreen.tsx)가 `gameState.recentSceneModes`의 마지막 값을 넘겨줌). 부수 효과로 `sh-work-2`/`sh-horror-2`가 각각 `city_sorrow`/`city_fear` 대신 이미 실제 아트가 있는 `indoor_sorrow`/`indoor_fear`로 이동 — `city_sorrow.png`는 이제 오프라인 시드 중 쓰는 게 없어 대기 상태(AI 생성 콘텐츠용으로는 여전히 유효). `od-danger-1`("산길")에도 `forest` 키워드 `산길` 추가
 - [ ] 조합이 늘어날 때마다 이 문서의 우선순위 표도 함께 갱신
+- [x] Phase 7: `office`(관공서/청사) 태그 추가(2026-08-06, 실플레이 스크린샷 제보) — `SceneTag`/`SCENE_THEMES`/`KEYWORD_TAGS`/`BackgroundScene.tsx` 갱신, 프롬프트 확정. `inferSceneTag`가 화면에 보이는 페이지가 아니라 situation 전체 원문을 검사한다는 것도 함께 확인(여러 페이지짜리 situation에서 앞쪽 문장의 장소 키워드가 우선 매칭될 수 있음) — `office.png`는 아직 자리표시자, 실제 아트 제작 필요
