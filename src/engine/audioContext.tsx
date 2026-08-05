@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import { loadSoundEnabled, saveSoundEnabled } from './settingsStore';
+import { DEFAULT_VOLUME, loadSoundEnabled, loadSoundVolume, saveSoundEnabled, saveSoundVolume } from './settingsStore';
+
+const VOLUME_STEP = 0.1;
+
+function clampVolume(value: number): number {
+  return Math.round(Math.min(1, Math.max(0, value)) * 10) / 10;
+}
 
 /**
  * Placeholder loop — self-synthesized ambient pad so the app has a working BGM
@@ -12,6 +18,9 @@ const BGM_SOURCE = require('../../assets/audio/bgm.wav');
 interface AudioContextValue {
   enabled: boolean;
   toggle: () => void;
+  volume: number;
+  increaseVolume: () => void;
+  decreaseVolume: () => void;
   /** Call from a user-gesture handler (button press) — browsers block audio until one occurs. */
   ensureStarted: () => void;
 }
@@ -21,11 +30,11 @@ const AudioContext = createContext<AudioContextValue | null>(null);
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const player = useAudioPlayer(BGM_SOURCE);
   const [enabled, setEnabled] = useState(true);
+  const [volume, setVolume] = useState(DEFAULT_VOLUME);
   const startedRef = useRef(false);
 
   useEffect(() => {
     player.loop = true;
-    player.volume = 0.35;
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -33,8 +42,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       setEnabled(await loadSoundEnabled());
+      setVolume(await loadSoundVolume());
     })();
   }, []);
+
+  useEffect(() => {
+    player.volume = volume;
+  }, [volume, player]);
 
   useEffect(() => {
     if (!enabled) {
@@ -60,7 +74,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  return <AudioContext.Provider value={{ enabled, toggle, ensureStarted }}>{children}</AudioContext.Provider>;
+  const changeVolume = (delta: number) => {
+    setVolume((prev) => {
+      const next = clampVolume(prev + delta);
+      saveSoundVolume(next);
+      return next;
+    });
+  };
+
+  const increaseVolume = () => changeVolume(VOLUME_STEP);
+  const decreaseVolume = () => changeVolume(-VOLUME_STEP);
+
+  return (
+    <AudioContext.Provider value={{ enabled, toggle, volume, increaseVolume, decreaseVolume, ensureStarted }}>
+      {children}
+    </AudioContext.Provider>
+  );
 }
 
 export function useAudio(): AudioContextValue {

@@ -1,4 +1,4 @@
-export type SceneTag = 'city' | 'forest' | 'market' | 'danger' | 'social' | 'indoor' | 'cell' | 'stairs' | 'alley' | 'visitation';
+export type SceneTag = 'city' | 'forest' | 'market' | 'danger' | 'social' | 'indoor' | 'cell' | 'stairs' | 'alley' | 'visitation' | 'office';
 
 export interface SceneTheme {
   tag: SceneTag;
@@ -57,6 +57,11 @@ export const SCENE_THEMES: Record<SceneTag, SceneTheme> = {
     label: '면회실',
     gradient: ['#2a2e38', '#545c6e'],
   },
+  office: {
+    tag: 'office',
+    label: '관공서',
+    gradient: ['#2e3038', '#565c68'],
+  },
 };
 
 const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
@@ -66,6 +71,10 @@ const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
   { tag: 'visitation', keywords: ['면회실', '면회', '접견실', '접견'] },
   { tag: 'stairs', keywords: ['계단', '층계'] },
   { tag: 'alley', keywords: ['골목'] },
+  // 실제 플레이 제보: AI가 만든 "청사에서 윤쇠를 찾는" 장면이 forest 기본값으로 잘못 표시됨 —
+  // 장소 키워드(청사/관아 등)가 danger/forest보다 뒤에 있어서, situation 앞부분에 숲/산길
+  // 묘사가 섞여 있으면 그쪽이 먼저 걸렸기 때문. 다른 장소 특정 키워드들과 같은 우선순위로 올림.
+  { tag: 'office', keywords: ['청사', '관아', '관청', '관공서', '집무실', '서무'] },
   // '피'/'적' 같은 한 글자 키워드는 '피하다'/'규칙적'처럼 무관한 흔한 단어에도 부분 문자열로
   // 걸려 오탐이 잦아('규칙적이다'가 'danger'로 잘못 분류되는 식) 더 구체적인 복합어로 대체.
   { tag: 'danger', keywords: ['위험', '위협', '매복', '강도', '흉기', '핏자국', '피투성이', '유혈', '싸움', '칼', '화살', '습격', '도적', '산적', '돌연변이', '비명'] },
