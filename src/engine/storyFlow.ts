@@ -73,6 +73,10 @@ export function buildStoryDirective(params: {
   /** Doc 04: true while a multi-day story thread is open — suppresses the variety/time-skip
    * pressure below so the pacing layer doesn't fight the thread's own continuity. */
   hasActiveThread?: boolean;
+  /** true면 이번에 생성하는 situation(다음 날)이 예정된 위기 Day — 실제 생사가 걸린 상황을 만들어야 한다. */
+  crisisAhead?: boolean;
+  /** true면 이번에 생성하는 outcome/stat_changes가 직전 위기 선택의 실제 결과 — 사망까지 이를 수 있는 수준으로 반영해야 한다. */
+  resolvingCrisis?: boolean;
 }): StoryDirective {
   const phase = getPhase(params.day, params.totalDays);
   const sceneMode = pickSceneMode(params.recentSceneModes);
@@ -92,5 +96,24 @@ export function buildStoryDirective(params: {
     avoidRepeat,
     timeSkip,
     timeSkipLabel,
+    crisisAhead: params.crisisAhead ?? false,
+    resolvingCrisis: params.resolvingCrisis ?? false,
   };
+}
+
+/**
+ * 99일 중 실제로 생사가 걸린 위기 3회를 초반/중반/후반 구간에 하나씩 배정한다. 구간을
+ * 나눠 뽑기 때문에 서로 겹치지 않고 자연히 간격이 벌어진다(플레이 피드백: "생존율이
+ * 너무 높다" — 매 턴의 확률을 전체적으로 바꾸는 대신, 손꼽히는 위기 순간만 확실히
+ * 위험하게 만드는 쪽을 택했다).
+ */
+export function generateCrisisDays(totalDays: number): number[] {
+  const bands: [number, number][] = [
+    [Math.round(totalDays * 0.15), Math.round(totalDays * 0.4)],
+    [Math.round(totalDays * 0.41), Math.round(totalDays * 0.7)],
+    [Math.round(totalDays * 0.71), Math.round(totalDays * 0.95)],
+  ];
+  return bands
+    .map(([min, max]) => min + Math.floor(Math.random() * (max - min + 1)))
+    .sort((a, b) => a - b);
 }

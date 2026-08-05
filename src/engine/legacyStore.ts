@@ -32,6 +32,7 @@ export async function saveLegacyRecord(params: {
   const record: LegacyRecord = {
     id: character.id,
     name: character.name,
+    job: character.job,
     lifeSummary: summarizeLife(dayLogs),
     finalStats: character.stats,
     diedOnDay,

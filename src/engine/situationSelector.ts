@@ -5,6 +5,7 @@ import {
   SituationCategory,
   SituationSeed,
   buildSituationSeeds,
+  buildCrisisSeeds,
 } from '../data/situationSeeds';
 import { OutcomeTier } from './statGen';
 import { SceneMode } from '../types/game';
@@ -146,6 +147,12 @@ function weightSeed(seed: SituationSeed, ctx: SelectionContext): number {
   }
 
   return Math.max(weight, 0.05);
+}
+
+/** 위기 전용 시드는 딱 3번만 쓰이므로 반복 방지 로직 없이 무작위로 하나 뽑는다. */
+export function pickCrisisSeed(seedCtx: SeedContext): SituationSeed {
+  const seeds = buildCrisisSeeds(seedCtx);
+  return seeds[Math.floor(Math.random() * seeds.length)];
 }
 
 export function pickWeightedSeed(ctx: SelectionContext): WeightedSeedResult {

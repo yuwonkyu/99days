@@ -23,6 +23,9 @@
     },
     "experiments": {
       "baseUrl": "/99days"
-    }
+    },
+    "plugins": [
+      "expo-audio"
+    ]
   }
 }

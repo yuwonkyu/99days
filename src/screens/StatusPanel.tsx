@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Character } from '../types/character';
 import { getRegion } from '../data/origins';
+import { formatStat } from '../engine/statGen';
 
 interface Props {
   visible: boolean;
@@ -19,7 +20,7 @@ function StatRow({ label, value }: { label: string; value: number }) {
       <View style={styles.statTrack}>
         <View style={[styles.statFill, { width: `${(value / 20) * 100}%` }]} />
       </View>
-      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statValue}>{formatStat(value)}</Text>
     </View>
   );
 }

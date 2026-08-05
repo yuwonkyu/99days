@@ -5,6 +5,7 @@ import {
   buildKnownChoiceMeta,
   inferChoiceCategory,
   inferChoiceLean,
+  pickCrisisSeed,
   pickWeightedSeed,
 } from './situationSelector';
 
@@ -127,6 +128,35 @@ const LEAN_BASE: Record<ChoiceLean, OutcomeDistribution> = {
   risky: { good: 0.35, neutral: 0.2, bad: 0.45 },
 };
 
+/**
+ * 99일 중 3번뿐인 위기의 결과 — 플레이 피드백("생존율이 너무 높다")에 대한 직접적인
+ * 대응. bad 티어는 안전하게 살아왔던 캐릭터도 실제로 죽을 수 있을 만큼 HP를 크게 깎는다.
+ * 안전한 선택(safe)도 완전한 안전망은 아니게, bad 확률에 확실한 하한을 둔다.
+ */
+const CRISIS_STAT_DELTA_BY_TIER: Record<OutcomeTier, StatDelta> = {
+  good: { HP: 3, LUK: 1 },
+  neutral: { HP: -8 },
+  bad: { HP: -34, LUK: -1 },
+};
+
+const CRISIS_LEAN_BASE: Record<ChoiceLean, OutcomeDistribution> = {
+  safe: { good: 0.32, neutral: 0.38, bad: 0.3 },
+  neutral: { good: 0.25, neutral: 0.3, bad: 0.45 },
+  risky: { good: 0.3, neutral: 0.15, bad: 0.55 },
+};
+
+const CRISIS_OUTCOME_TEXT: Record<OutcomeTier, (choice: string) => string> = {
+  good: (choice) => `"${choice}" 쪽을 택했다. 아슬아슬했지만 구사일생으로 목숨을 건졌다.`,
+  neutral: (choice) => `"${choice}" 쪽을 택했다. 큰 화는 면했지만 몸 이곳저곳이 성치 않다.`,
+  bad: (choice) => `"${choice}" 쪽을 택했지만 결국 크게 당하고 말았다. 정신이 아득해질 만큼 위태로운 상태다.`,
+};
+
+const CRISIS_DAY_SUMMARIES: Record<OutcomeTier, string[]> = {
+  good: ['생사를 오간 위기를 구사일생으로 넘겼다.'],
+  neutral: ['위기 속에서 크게 다쳤지만 살아남았다.'],
+  bad: ['죽음의 문턱까지 갔다 겨우 살아 돌아왔다.'],
+};
+
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -185,23 +215,28 @@ export function generateOfflineTurn(context: TurnContext, usedSeedIds: string[] 
     const knownMeta = buildKnownChoiceMeta(seedCtx);
     lean = inferChoiceLean(chosenChoice, knownMeta);
     category = inferChoiceCategory(chosenChoice, knownMeta);
-    const dist = applyLuckBias(character.stats.LUK, LEAN_BASE[lean]);
+    const leanBase = storyDirective.resolvingCrisis ? CRISIS_LEAN_BASE : LEAN_BASE;
+    const dist = applyLuckBias(character.stats.LUK, leanBase[lean]);
     tier = sampleOutcomeTier(dist);
   }
 
-  // Doc 04: 결과 티어(good/neutral/bad)가 다음 상황의 장르 가중치에도 영향을 준다 —
+  // 위기 Day(storyDirective.crisisAhead)는 일반 가중치 풀 대신 전용 위기 시드에서만 뽑는다
+  // (situationSeeds.ts의 buildCrisisSeeds — 99일 중 3번뿐이라 반복 방지 추적은 필요 없음).
+  // Doc 04: 그 외에는 결과 티어(good/neutral/bad)가 다음 상황의 장르 가중치에도 영향을 준다 —
   // "결과에 맞는 상황으로 이어지는" 흐름. excludeIds로 "한번 나온 상황은 다시 안 나오게" 한다.
-  const { seed, wasReset } = pickWeightedSeed({
-    seedCtx,
-    sceneMode: storyDirective.sceneMode,
-    avoidRepeat: storyDirective.avoidRepeat,
-    recentDayLogs: recentDayLogs ?? [],
-    hpRatio: character.hp / character.maxHp,
-    luk: character.stats.LUK,
-    phase: storyDirective.phase,
-    linkedTier: tier,
-    excludeIds: new Set(usedSeedIds),
-  });
+  const { seed, wasReset } = storyDirective.crisisAhead
+    ? { seed: pickCrisisSeed(seedCtx), wasReset: false }
+    : pickWeightedSeed({
+        seedCtx,
+        sceneMode: storyDirective.sceneMode,
+        avoidRepeat: storyDirective.avoidRepeat,
+        recentDayLogs: recentDayLogs ?? [],
+        hpRatio: character.hp / character.maxHp,
+        luk: character.stats.LUK,
+        phase: storyDirective.phase,
+        linkedTier: tier,
+        excludeIds: new Set(usedSeedIds),
+      });
   const choices = seed.choices.map((c) => c.text);
   const threadClosure = buildThreadClosurePrefix(activeThread?.summary);
   const prefix = buildTransitionPrefix(day, storyDirective.timeSkip, storyDirective.timeSkipLabel, seed.situation);
@@ -216,6 +251,21 @@ export function generateOfflineTurn(context: TurnContext, usedSeedIds: string[] 
         choices,
         stat_changes: {},
         day_summary: `${character.name}의 Day ${day} 이야기가 시작되었다.`,
+        thread,
+      },
+      usedSeedId: seed.id,
+      resetUsedSeeds: wasReset,
+    };
+  }
+
+  if (storyDirective.resolvingCrisis) {
+    return {
+      response: {
+        situation,
+        choices,
+        outcome: CRISIS_OUTCOME_TEXT[tier](chosenChoice),
+        stat_changes: CRISIS_STAT_DELTA_BY_TIER[tier],
+        day_summary: pick(CRISIS_DAY_SUMMARIES[tier]),
         thread,
       },
       usedSeedId: seed.id,

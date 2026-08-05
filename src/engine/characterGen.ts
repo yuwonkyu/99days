@@ -29,12 +29,40 @@ function randomBodyType(age: number, gender: Gender): BodyType {
   return { heightCm: Math.round(heightCm), weightKg: Math.round(weightKg) };
 }
 
+/** 직업 카테고리(5종) 단위 폴백 — 아래 STARTER_ITEMS_BY_JOB에 없는 직업 id가 추가되면 여기로 떨어진다. */
 const STARTER_ITEMS_BY_CATEGORY: Record<string, string[]> = {
   labor: ['여벌 옷', '무두질된 가죽끈'],
   combat: ['여벌 옷', '녹슨 단검'],
   scholar: ['여벌 옷', '닳은 서책'],
   merchant: ['여벌 옷', '작은 저울'],
   other: ['여벌 옷', '부싯돌'],
+};
+
+/** 같은 카테고리라도 구체적인 직업에 맞는 소지품이 나오도록 직업 id 단위로 세분화. */
+const STARTER_ITEMS_BY_JOB: Record<string, string[]> = {
+  hunter: ['활과 화살', '가죽 화살통'],
+  herder: ['양치기 지팡이', '여벌 옷'],
+  blacksmith: ['작은 망치', '가죽 앞치마'],
+  soldier: ['녹슨 단검', '낡은 사슬 갑옷 조각'],
+  porter: ['질긴 밧줄', '등짐'],
+  tracker: ['사냥용 덫', '여벌 옷'],
+  trapper: ['동물 가죽', '사냥용 덫'],
+  herbalist: ['말린 약초 주머니', '작은 절구'],
+  scout: ['멀리 보는 렌즈', '녹슨 단검'],
+  weaver: ['실타래', '베틀북'],
+  merchant: ['작은 저울', '거래 장부'],
+  boatman: ['노', '여벌 옷'],
+  gambler: ['낡은 패 한 벌', '동전 몇 닢'],
+  clerk: ['깃펜', '잉크병'],
+  moneylender: ['전당 장부', '열쇠 꾸러미'],
+  scholar: ['닳은 서책', '깃펜'],
+  scribe: ['양피지 조각', '먹물통'],
+  physician: ['약초 주머니', '침 상자'],
+  guard: ['짧은 곤봉', '호루라기'],
+  farmer: ['낫', '씨앗 주머니'],
+  squire: ['녹슨 단검', '방패 조각'],
+  farmhand: ['괭이', '여벌 옷'],
+  mason: ['정과 망치', '돌가루 묻은 앞치마'],
 };
 
 function generateId(): string {
@@ -60,7 +88,9 @@ export function generateRandomCharacter(options: CharacterGenOptions = {}): Char
   const personality = randomPersonality();
   const name = nameOverride?.trim() || randomName(regionId, gender);
   const hp = computeHP(stats, age, bodyType, job.category);
-  const inventory = [...(STARTER_ITEMS_BY_CATEGORY[job.category] ?? STARTER_ITEMS_BY_CATEGORY.other)];
+  const inventory = [
+    ...(STARTER_ITEMS_BY_JOB[job.id] ?? STARTER_ITEMS_BY_CATEGORY[job.category] ?? STARTER_ITEMS_BY_CATEGORY.other),
+  ];
 
   return {
     id: generateId(),
