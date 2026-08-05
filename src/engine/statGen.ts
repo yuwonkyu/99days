@@ -6,6 +6,18 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+/** Rounds to 1 decimal — repeatedly adding fractional stat_changes (e.g. +0.3 growth) across
+ * many turns otherwise drifts into floating-point noise like 11.60000000000001. */
+function roundTo1(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+/** Display helper: whole numbers render without a trailing ".0", fractional stats show 1 decimal. */
+export function formatStat(value: number): string {
+  const rounded = roundTo1(value);
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * clamp(t, 0, 1);
 }
@@ -106,12 +118,12 @@ export function sampleOutcomeTier(dist: OutcomeDistribution): OutcomeTier {
 /** Applies an AI/offline-generated stat delta to a character, clamping to valid ranges. */
 export function applyStatDelta(character: Character, delta: StatDelta): Character {
   const stats: Stats = {
-    STR: clamp(character.stats.STR + (delta.STR ?? 0), 1, 20),
-    INT: clamp(character.stats.INT + (delta.INT ?? 0), 1, 20),
-    AGI: clamp(character.stats.AGI + (delta.AGI ?? 0), 1, 20),
-    LUK: clamp(character.stats.LUK + (delta.LUK ?? 0), 1, 20),
+    STR: roundTo1(clamp(character.stats.STR + (delta.STR ?? 0), 1, 20)),
+    INT: roundTo1(clamp(character.stats.INT + (delta.INT ?? 0), 1, 20)),
+    AGI: roundTo1(clamp(character.stats.AGI + (delta.AGI ?? 0), 1, 20)),
+    LUK: roundTo1(clamp(character.stats.LUK + (delta.LUK ?? 0), 1, 20)),
   };
-  const hp = clamp(character.hp + (delta.HP ?? 0), 0, character.maxHp);
-  const age = clamp(character.age + (delta.AGE ?? 0), 1, 120);
+  const hp = Math.round(clamp(character.hp + (delta.HP ?? 0), 0, character.maxHp));
+  const age = Math.round(clamp(character.age + (delta.AGE ?? 0), 1, 120));
   return { ...character, stats, hp, age };
 }

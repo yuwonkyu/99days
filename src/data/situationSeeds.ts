@@ -1,5 +1,6 @@
 import { SceneMode } from '../types/game';
 import { eunNeun, iGa, eulReul } from '../engine/korean';
+import { JOBS, JobCategory } from './jobs';
 
 /**
  * Doc 04: offline fallback content library. Instead of one static paragraph per
@@ -41,9 +42,47 @@ const OMENS = ['까마귀 떼', '핏자국', '깨진 부적', '타다 만 편지
 const NOISES = ['긁는 소리', '숨죽인 발소리', '희미한 신음', '금속이 부딪히는 소리', '알 수 없는 웃음소리'];
 export const TIME_MOODS = ['이른 아침', '해 질 무렵', '비 오는 오후', '유난히 조용한 오전', '바람이 매섭게 부는 밤'];
 
+/**
+ * 플레이 피드백("무난한 일상에도 사건이 자주 생겼으면 좋겠다" — 농부의 양이 울타리를 넘거나,
+ * 경비가 월담 시도를 알아채는 것처럼)에 대응한 직업군별 돌발 사건 뱅크. 같은 '일하는 중' 시드라도
+ * 직업에 따라 다른 소동이 벌어지도록 job → category로 매핑해 골라 쓴다.
+ */
+const JOB_INCIDENTS: Record<JobCategory, string[]> = {
+  labor: [
+    '기르던 가축 몇 마리가 울타리를 넘어 달아났다',
+    '짐수레 바퀴가 진창에 빠져 오도 가도 못하게 됐다',
+    '헛간 지붕이 새는 걸 뒤늦게 발견했다',
+  ],
+  combat: [
+    '담장 너머로 누군가 넘어오려는 낌새를 챘다',
+    '순찰하던 길목에 낯선 발자국이 새로 나 있다',
+    '무기고 자물쇠가 억지로 열린 흔적을 발견했다',
+  ],
+  scholar: [
+    '필사하던 문서 한 장이 바람에 날아가 버렸다',
+    '빌려준 책이 험하게 훼손된 채 돌아왔다',
+    '기록해두었던 장부 한 페이지가 통째로 사라졌다',
+  ],
+  merchant: [
+    '거스름돈 계산이 자꾸 맞지 않는다',
+    '단골 손님이 외상값을 갚지 않고 자취를 감췄다',
+    '들여온 물건 일부가 상해 못 쓰게 됐다',
+  ],
+  other: [
+    '기르던 짐승들이 갑자기 소란스러워졌다',
+    '처음 맡아보는 낯선 냄새가 코를 찌른다',
+    '늘 다니던 길목에 못 보던 표식이 그려져 있다',
+  ],
+};
+
+function jobCategoryOf(jobLabel: string): JobCategory {
+  return JOBS.find((j) => j.label === jobLabel)?.category ?? 'other';
+}
+
 /** Doc 04: 12 buckets (mode × category) × 3 seeds each = 36 authored, well over 100 combined renders. */
 export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
   const { name, job, personality } = ctx;
+  const jobCategory = jobCategoryOf(job);
   const 은는 = eunNeun(name);
   const 이가 = iGa(name);
   const 을를 = eulReul(name);
@@ -522,6 +561,148 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
         { text: '차를 대접하며 이야기를 나눈다', lean: 'neutral' },
         { text: '넌지시 마음을 떠본다', lean: 'risky' },
         { text: '적당히 예의만 차리고 만다', lean: 'safe' },
+      ],
+    },
+
+    // 직업별 돌발 사건 (JOB_INCIDENTS) — 같은 '일하는 중'이라도 직업에 따라 다른 소동이 벌어진다
+    {
+      id: 'od-work-4',
+      mode: 'outdoor',
+      category: 'work',
+      situation: `한창 일하던 중, ${pick(JOB_INCIDENTS[jobCategory])}. ${name}${은는} 하던 일을 멈추고 서둘러야 한다.`,
+      choices: [
+        { text: '만사 제쳐두고 바로 뛰어가 수습한다', lean: 'risky' },
+        { text: '순서를 따져가며 침착하게 처리한다', lean: 'safe' },
+        { text: '주변 사람에게 도움을 청한다', lean: 'neutral' },
+      ],
+    },
+    {
+      id: 'sh-work-4',
+      mode: 'shelter',
+      category: 'work',
+      situation: `거처에 머물던 중에도 일 걱정은 끊이지 않는다. ${pick(JOB_INCIDENTS[jobCategory])}는 소식이 뒤늦게 전해진다.`,
+      choices: [
+        { text: '당장 달려가 확인한다', lean: 'risky' },
+        { text: '날이 밝으면 처리하기로 한다', lean: 'safe' },
+        { text: '믿을 만한 이에게 부탁해 대신 살피게 한다', lean: 'neutral' },
+      ],
+    },
+
+    // 평범한 하루에도 갑자기 끼어드는 사건 — 반복되는 잔잔한 전개에 변주를 준다
+    {
+      id: 'od-danger-4',
+      mode: 'outdoor',
+      category: 'danger',
+      situation: `길 한복판에서 갑자기 놀란 말 한 마리가 고삐 풀린 채 ${name}${을를} 향해 곧장 달려온다. 피할 틈이 많지 않다.`,
+      choices: [
+        { text: '재빨리 옆으로 몸을 던진다', lean: 'safe' },
+        { text: '고삐를 붙잡아 세워본다', lean: 'risky' },
+        { text: '길가 사람들에게 소리쳐 알린다', lean: 'neutral' },
+      ],
+    },
+    {
+      id: 'sh-comedy-4',
+      mode: 'shelter',
+      category: 'comedy',
+      situation: `조용히 지내던 중, 이웃집 짐승이 울타리를 넘어와 ${name}의 빨래를 죄다 물어뜯어 놓았다.`,
+      choices: [
+        { text: '짐승을 쫓아내고 주인을 찾아간다', lean: 'neutral' },
+        { text: '그냥 웃어넘기고 다시 넌다', lean: 'safe' },
+        { text: '화가 나 언성을 높인다', lean: 'risky' },
+      ],
+    },
+    {
+      id: 'od-social-4',
+      mode: 'outdoor',
+      category: 'social',
+      situation: `요즘 부쩍 마주치는 ${pick(STRANGERS)}가 ${name}${을를} 은근히 견제하는 눈치다. 같은 자리를 두고 다투는 사이라는 소문도 있다.`,
+      choices: [
+        { text: '먼저 다가가 속내를 떠본다', lean: 'risky' },
+        { text: '신경 쓰지 않고 할 일만 한다', lean: 'safe' },
+        { text: '주변에 넌지시 사정을 물어본다', lean: 'neutral' },
+      ],
+    },
+    {
+      id: 'od-bond-3',
+      mode: 'outdoor',
+      category: 'bond',
+      situation: `${job}으로서 해온 일을 눈여겨보던 이가 ${personality} ${name}에게 진심 어린 칭찬을 건넨다. 오랜만에 마음이 뿌듯해진다.`,
+      choices: [
+        { text: '고마움을 표현하며 대화를 이어간다', lean: 'neutral' },
+        { text: '쑥스러워 얼버무리고 만다', lean: 'safe' },
+        { text: '앞으로 더 잘해보고 싶어진다고 말한다', lean: 'risky' },
+      ],
+    },
+  ];
+}
+
+/**
+ * 99일 중 3번 배정되는 "진짜 죽을 수 있는" 위기 전용 시드. 일반 시드 풀과 분리해 두어
+ * (storyFlow.ts의 crisisAhead) 오프라인 폴백도 이 순간만큼은 확실히 위험하게 만든다 —
+ * 실제 심각도는 offlineGenerator.ts의 CRISIS_STAT_DELTA_BY_TIER가 결정한다.
+ */
+export function buildCrisisSeeds(ctx: SeedContext): SituationSeed[] {
+  const { name, personality } = ctx;
+  const 은는 = eunNeun(name);
+  const 을를 = eulReul(name);
+
+  return [
+    {
+      id: 'crisis-danger-1',
+      mode: 'outdoor',
+      category: 'danger',
+      situation: `길목을 막아선 도적 무리가 ${name}${을를} 에워싼다. 여럿이 무기를 들었고, 도망칠 틈은 좁아 보인다.`,
+      choices: [
+        { text: '가진 것을 던지고 틈을 노려 달아난다', lean: 'safe' },
+        { text: '순순히 요구에 따른다', lean: 'neutral' },
+        { text: '무기를 들고 맞선다', lean: 'risky' },
+      ],
+    },
+    {
+      id: 'crisis-danger-2',
+      mode: 'outdoor',
+      category: 'danger',
+      situation: `마른 숲에 붙은 불이 순식간에 번져 ${name}의 퇴로를 막는다. 연기 때문에 방향을 가늠하기도 어렵다.`,
+      choices: [
+        { text: '낮은 자세로 바람을 등지고 달린다', lean: 'safe' },
+        { text: '물이 있는 쪽을 향해 곧장 뛴다', lean: 'neutral' },
+        { text: '불길 사이 좁은 틈을 뚫고 지나간다', lean: 'risky' },
+      ],
+    },
+    {
+      id: 'crisis-danger-3',
+      mode: 'outdoor',
+      category: 'danger',
+      situation: (() => {
+        const threat = pick(['굶주린 늑대 무리', '흥분한 멧돼지 떼']);
+        return `${threat}${iGa(threat)} ${name}${을를} 향해 다가온다. 나무를 오르기엔 늦었고, 무리는 점점 좁혀온다.`;
+      })(),
+      choices: [
+        { text: '뒷걸음질치며 거리를 유지한다', lean: 'safe' },
+        { text: '큰 소리와 몸짓으로 위협해본다', lean: 'neutral' },
+        { text: '무기를 들고 정면으로 맞선다', lean: 'risky' },
+      ],
+    },
+    {
+      id: 'crisis-shelter-1',
+      mode: 'shelter',
+      category: 'danger',
+      situation: `폭우로 지반이 무너지며 ${name}의 거처 지붕 한쪽이 순식간에 내려앉는다. 잔해에 깔리기 직전이다.`,
+      choices: [
+        { text: '몸을 던져 문밖으로 굴러 나간다', lean: 'safe' },
+        { text: '기둥을 붙잡고 버텨본다', lean: 'neutral' },
+        { text: '무너지는 쪽으로 뛰어들어 물건을 건진다', lean: 'risky' },
+      ],
+    },
+    {
+      id: 'crisis-shelter-2',
+      mode: 'shelter',
+      category: 'horror',
+      situation: `${personality} ${name}${은는} 한밤중 고열과 극심한 오한에 잠에서 깬다. 상한 음식을 먹은 게 뒤늦게 떠오르지만, 도와줄 사람은 곁에 없다.`,
+      choices: [
+        { text: '억지로라도 물을 마시며 버틴다', lean: 'safe' },
+        { text: '이웃을 깨워 도움을 청한다', lean: 'neutral' },
+        { text: '남은 약초를 한꺼번에 삼킨다', lean: 'risky' },
       ],
     },
   ];

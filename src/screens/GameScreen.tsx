@@ -4,7 +4,7 @@ import { Character } from '../types/character';
 import { GameState, StoryThread, TOTAL_DAYS } from '../types/game';
 import { TurnSource, getNextTurn } from '../engine/turnService';
 import { buildTurnContext } from '../engine/promptBuilder';
-import { buildStoryDirective } from '../engine/storyFlow';
+import { buildStoryDirective, generateCrisisDays } from '../engine/storyFlow';
 import { pickEndingText } from '../engine/endingSelector';
 import { applyStatDelta } from '../engine/statGen';
 import { sampleLegacyMentions, saveLegacyRecord } from '../engine/legacyStore';
@@ -16,6 +16,7 @@ import DayProgressBar from '../components/DayProgressBar';
 import ChoiceList from '../components/ChoiceList';
 import ReturningSummaryBanner from '../components/ReturningSummaryBanner';
 import StatChangeBadges from '../components/StatChangeBadges';
+import SoundToggleButton from '../components/SoundToggleButton';
 import StatusPanel from './StatusPanel';
 
 interface Props {
@@ -75,11 +76,13 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
   async function startNewGame(character: Character) {
     setLoading(true);
     const legacyMentions = await sampleLegacyMentions();
+    const crisisDays = generateCrisisDays(TOTAL_DAYS);
     const storyDirective = buildStoryDirective({
       day: 1,
       totalDays: TOTAL_DAYS,
       recentSceneModes: [],
       recentDaySummaries: [],
+      crisisAhead: crisisDays.includes(1),
     });
     const context = buildTurnContext({
       character,
@@ -98,6 +101,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       dayLogs: [],
       recentSceneModes: [storyDirective.sceneMode],
       usedSeedIds: usedSeedId ? [usedSeedId] : [],
+      crisisDays,
       currentSituation: response.situation,
       currentChoices: response.choices,
       lastOutcome: undefined,
@@ -130,12 +134,15 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
     const legacyMentions = await sampleLegacyMentions();
     const recentDayLogs = gameState.dayLogs.slice(-3);
     const activeThread = gameState.activeThread;
+    const crisisDays = gameState.crisisDays ?? [];
     const storyDirective = buildStoryDirective({
       day: gameState.day,
       totalDays: TOTAL_DAYS,
       recentSceneModes: gameState.recentSceneModes ?? [],
       recentDaySummaries: recentDayLogs,
       hasActiveThread: !!activeThread,
+      resolvingCrisis: crisisDays.includes(gameState.day),
+      crisisAhead: crisisDays.includes(gameState.day + 1),
     });
     const context = buildTurnContext({
       character: gameState.character,
@@ -186,6 +193,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       dayLogs: newDayLogs,
       recentSceneModes: newSceneModes,
       usedSeedIds: newUsedSeedIds,
+      crisisDays,
       currentSituation: response.situation,
       currentChoices: response.choices,
       lastOutcome: response.outcome,
@@ -236,16 +244,24 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
   const currentSceneMode = gameState.recentSceneModes?.[gameState.recentSceneModes.length - 1];
   const sceneTag = inferSceneTag(gameState.currentSituation, currentSceneMode);
   const sceneMood = inferMood(gameState.currentSituation);
+  const isCrisisToday = (gameState.crisisDays ?? []).includes(gameState.day);
 
   return (
     <BackgroundScene tag={sceneTag} mood={sceneMood}>
       <View style={styles.overlay}>
         <View style={styles.topBar}>
           <DayProgressBar day={gameState.day} totalDays={TOTAL_DAYS} />
+          <SoundToggleButton />
           <Pressable style={styles.statusButton} onPress={() => setStatusVisible(true)}>
             <Text style={styles.statusButtonText}>상태</Text>
           </Pressable>
         </View>
+
+        {isCrisisToday && (
+          <View style={styles.crisisBanner}>
+            <Text style={styles.crisisBannerText}>⚠ 생사의 기로 — 신중히 선택하세요</Text>
+          </View>
+        )}
 
         {returnSummary && (
           <ReturningSummaryBanner summary={returnSummary} onDismiss={() => setReturnSummary(null)} />
@@ -323,6 +339,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.18)',
   },
   statusButtonText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  crisisBanner: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(160,30,30,0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,120,120,0.6)',
+  },
+  crisisBannerText: { color: '#ffd7d3', fontSize: 12, fontWeight: '700', textAlign: 'center' },
   panelScroll: { flexGrow: 1, justifyContent: 'flex-end', padding: 16 },
   panel: {
     backgroundColor: 'rgba(10,12,18,0.72)',

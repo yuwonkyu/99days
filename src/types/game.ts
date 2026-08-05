@@ -68,6 +68,10 @@ export interface StoryDirective {
   /** true면 이번 턴은 전날 바로 다음이 아니라 timeSkipLabel만큼 시간이 압축되어 흐른 것으로 서술한다. */
   timeSkip: boolean;
   timeSkipLabel?: string;
+  /** true면 이번에 생성하는 situation(다음 날 상황)이 GameState.crisisDays 중 하나 — 실제로 생사가 걸린 위기여야 한다. */
+  crisisAhead: boolean;
+  /** true면 이번에 생성하는 outcome/stat_changes가 직전 위기 상황에서 내린 선택의 실제 결과 — 나쁜 선택/불운이면 사망까지 이를 수 있는 수준으로 반영해야 한다. */
+  resolvingCrisis: boolean;
 }
 
 export interface TurnContext {
@@ -89,6 +93,8 @@ export interface GameState {
   recentSceneModes: SceneMode[];
   /** Doc 04: 오프라인 폴백이 이미 보여준 시드 id 목록 — 다 보기 전까진 반복 안 되게 제외에 쓴다. */
   usedSeedIds: string[];
+  /** 99일 중 실제로 생사가 걸린 위기 3회가 배정된 Day 번호 (게임 시작 시 1회 생성해 고정). */
+  crisisDays: number[];
   currentSituation: string;
   currentChoices: string[];
   lastOutcome?: string;

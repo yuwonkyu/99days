@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Character } from './src/types/character';
-import { loadGameState } from './src/engine/gameStateStore';
+import { AudioProvider } from './src/engine/audioContext';
+import HomeScreen from './src/screens/HomeScreen';
+import RecordsScreen from './src/screens/RecordsScreen';
 import CharacterCreationScreen from './src/screens/CharacterCreationScreen';
 import GameScreen from './src/screens/GameScreen';
 
-type Screen = 'boot' | 'creation' | 'game';
+type Screen = 'home' | 'creation' | 'game' | 'records';
 
 // Portrait frame used to letterbox the game on wide desktop windows so it
 // always reads as a mobile screen. width/height ratio, mobile-standard 9:16.
@@ -27,47 +29,46 @@ function useFrameSize() {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('boot');
+  const [screen, setScreen] = useState<Screen>('home');
   const [pendingCharacter, setPendingCharacter] = useState<Character | null>(null);
   const frameSize = useFrameSize();
 
-  useEffect(() => {
-    (async () => {
-      const saved = await loadGameState();
-      setScreen(saved && !saved.isEnded ? 'game' : 'creation');
-    })();
-  }, []);
-
-  if (screen === 'boot') {
-    return (
-      <View style={styles.page}>
-        <SafeAreaView style={[styles.container, frameSize]} />
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.page}>
-      <SafeAreaView style={[styles.container, frameSize]}>
-        <StatusBar style="light" />
-        {screen === 'creation' ? (
-          <CharacterCreationScreen
-            onStart={(character) => {
-              setPendingCharacter(character);
-              setScreen('game');
-            }}
-          />
-        ) : (
-          <GameScreen
-            initialCharacter={pendingCharacter}
-            onEnded={() => {
-              setPendingCharacter(null);
-              setScreen('creation');
-            }}
-          />
-        )}
-      </SafeAreaView>
-    </View>
+    <AudioProvider>
+      <View style={styles.page}>
+        <SafeAreaView style={[styles.container, frameSize]}>
+          <StatusBar style="light" />
+          {screen === 'home' && (
+            <HomeScreen
+              onContinue={() => {
+                setPendingCharacter(null);
+                setScreen('game');
+              }}
+              onNewGame={() => setScreen('creation')}
+              onRecords={() => setScreen('records')}
+            />
+          )}
+          {screen === 'creation' && (
+            <CharacterCreationScreen
+              onStart={(character) => {
+                setPendingCharacter(character);
+                setScreen('game');
+              }}
+            />
+          )}
+          {screen === 'game' && (
+            <GameScreen
+              initialCharacter={pendingCharacter}
+              onEnded={() => {
+                setPendingCharacter(null);
+                setScreen('home');
+              }}
+            />
+          )}
+          {screen === 'records' && <RecordsScreen onBack={() => setScreen('home')} />}
+        </SafeAreaView>
+      </View>
+    </AudioProvider>
   );
 }
 

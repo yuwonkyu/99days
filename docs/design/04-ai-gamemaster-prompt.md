@@ -56,6 +56,10 @@
 - 폭력/죽음/상실 등 소설의 톤(건조한 현실주의)은 유지하되 과도하게 선정적이거나 자극적인 묘사는 피할 것
 - 미성년 캐릭터가 생성될 수 있으므로 연령에 부적절한 내용 생성 금지
 
+[위기 안내 - turnContext.storyDirective.crisisAhead / resolvingCrisis 활용]
+- crisisAhead가 true면: 이번에 생성하는 situation은 캐릭터의 99일 인생 중 손꼽히는 위기의 순간이어야 한다. 실제로 죽음에 이를 수 있는 심각한 신체적 위험(습격, 화재, 급류, 붕괴, 맹수, 질병 등 세계관에 맞는 사실적 위협)을 구체적으로 묘사할 것
+- resolvingCrisis가 true면: 이번에 생성하는 outcome/stat_changes.HP는 직전 위기 상황에서 내린 선택의 실제 결과다. 선택이 나빴거나 운이 나빴다면 HP를 크게(예: -25~-45) 깎아 죽음에 이를 수도 있게 하고, 신중하고 현명한 선택이었다면 생존 가능성을 확실히 남길 것. 과도하게 유리한 결과로 위기를 무마하지 말 것
+
 [출력 형식 - JSON]
 {
   "situation": "string",
@@ -112,6 +116,17 @@
   `TOOL_SCHEMA`/`SYSTEM_PROMPT`에도 반영되어 있으므로, 코드 변경 후 `worker/` 디렉토리에서
   `npx wrangler deploy`로 재배포해야 실제 AI 응답에 적용된다** (프론트엔드 GitHub Pages 배포와는
   별도 절차).
+- **crisisAhead/resolvingCrisis (3회 생사 위기)**: "99일 동안 실제로 죽는 일이 거의 없어 생존율이
+  체감상 너무 높다"는 피드백에 대응해, 매 턴의 확률을 전체적으로 바꾸는 대신 손꼽히는 위기 순간만
+  확실히 위험하게 만드는 쪽을 택했다. `GameState.crisisDays`가 게임 시작 시 `storyFlow.generateCrisisDays()`로
+  초반(15~40일)/중반(41~70일)/후반(71~95일) 구간에 하나씩, 총 3일을 랜덤 배정해 고정한다. 해당 Day의
+  situation을 생성하는 턴에는 `crisisAhead: true`를, 그 위기에서 내린 선택의 결과를 생성하는 다음 턴에는
+  `resolvingCrisis: true`를 전달해 AI가 실제로 죽음에 이를 수 있는 수준의 상황/결과를 만들도록 지시한다.
+  오프라인 폴백은 [situationSeeds.ts](../../src/data/situationSeeds.ts)의 `buildCrisisSeeds()` 전용
+  시드와 [offlineGenerator.ts](../../src/engine/offlineGenerator.ts)의 `CRISIS_STAT_DELTA_BY_TIER`/
+  `CRISIS_LEAN_BASE`(안전한 선택도 bad 확률 30%대)로 동일한 위험도를 보장한다. **이 필드도 Cloudflare
+  Worker의 `SYSTEM_PROMPT`에 반영되어 있으므로, `worker/` 디렉토리에서 `npx wrangler deploy`로
+  재배포해야 AI 경로에도 실제로 적용된다.**
 - 오프라인 폴백([offlineGenerator.ts](../../src/engine/offlineGenerator.ts))도 동일한 `sceneMode`로
   템플릿 풀을 필터링해, AI 없이도 최소한의 흐름을 유지한다. 다만 AI와 달리 매번 독립된 시드를 뽑기
   때문에 "거처에서 문을 확인하다가 갑자기 숲 가장자리"처럼 뜬금없게 느껴진다는 실플레이 피드백이

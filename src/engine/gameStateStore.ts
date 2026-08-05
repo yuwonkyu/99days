@@ -28,5 +28,7 @@ export function buildReturnSummary(state: GameState): string | null {
   const awayMs = Date.now() - state.lastPlayedAt;
   if (awayMs < RETURN_THRESHOLD_MS || state.dayLogs.length === 0) return null;
   const recent = state.dayLogs.slice(-3);
-  return `그동안의 이야기: ${recent.join(' ')}`;
+  // day_summary는 30자 제한에 걸리면 "…"로 끝나기도 하는데(textLimits.ts), 그런 조각들을
+  // 공백만으로 이어붙이면 한 문장이 계속 끊기는 것처럼 읽힌다 — 날짜별로 분명히 구분되게 표시.
+  return `그동안의 이야기:\n${recent.map((line) => `· ${line}`).join('\n')}`;
 }

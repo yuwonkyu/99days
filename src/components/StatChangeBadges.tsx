@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { StatDelta } from '../types/game';
+import { formatStat } from '../engine/statGen';
 
 /** Doc 04: 결과 텍스트만으로는 실제로 뭐가 얼마나 바뀌었는지 안 보인다는 피드백 — 변화량을 뱃지로 표시. */
 const LABELS: Record<keyof StatDelta, string> = {
@@ -29,7 +30,7 @@ export default function StatChangeBadges({ delta }: Props) {
         <View key={key} style={[styles.badge, value > 0 ? styles.positive : styles.negative]}>
           <Text style={styles.badgeText}>
             {LABELS[key]} {value > 0 ? '+' : ''}
-            {value}
+            {formatStat(value)}
           </Text>
         </View>
       ))}
