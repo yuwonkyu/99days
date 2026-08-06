@@ -397,41 +397,52 @@ square:        open village square with a central well or stone marker, simple w
 `BackgroundScene.tsx`의 `BACKGROUND_IMAGES` 전부 갱신, 브라우저에서 실플레이 제보 장면(`warehouse`)
 정상 렌더링 확인. 5장 모두 실제 아트 제작 완료(2026-08-06) — 이제 SceneTag 16종 전부 실제 아트 보유.
 
-### Phase 11 후보 — 추가 배경 장소 리스트업만 (2026-08-06, 사용자 요청)
+### Phase 11 — 추가 배경 장소 18종 프롬프트 확정 (2026-08-06, 사용자 요청)
 
-"외양간/마구간 등 마을을 이루는 장소, 자연의 장소, 상황을 알 수 있는 장소"를 더 추가하자는 요청 —
-이번엔 프롬프트/구현 없이 후보만 정리해 로드맵에 올려둔다. 실제 착수 시 Phase 1~10과 같은 방식
-(실측 우선순위 → 프롬프트 확정 → 코드 연결 → 자리표시자 → 실제 아트)으로 진행하면 된다.
+Phase 11 후보 18개 전부에 대해 프롬프트를 확정했다(코드 연결·자리표시자·실제 아트는 아직 — 이미지
+생성 후 파일명 알려주면 Phase 10과 같은 방식으로 `SceneTag`/`KEYWORD_TAGS`/`BackgroundScene.tsx`에
+연결). 공통 프리픽스/네거티브는 Phase 1과 동일하게 앞뒤에 붙여서 사용:
+```
+painterly illustration, pre-industrial fantasy setting, muted natural palette, no magic effects, no sci-fi elements, no modern technology.
+[아래 표의 키워드]
+vertical portrait composition, 9:16 aspect ratio, key subject centered in frame.
+no text, no watermark, no modern clothing, no futuristic elements.
+```
 
-**마을을 이루는 장소**
-| 후보 | 비고 |
-|---|---|
-| 여관/술집 내부 | 지금은 `indoor`가 흡수 중인데, 이번 제보(마리아와의 여관 대화)처럼 등장 빈도가 꽤 있어 보임 — `warehouse`가 `indoor`에서 분리된 것과 같은 이유로 전용 태그 승격 후보 1순위 |
-| 외양간 · 마구간 | 가축을 돌보는 장면(직업 `labor` 계열의 `JOB_INCIDENTS`와도 연결 가능) |
-| 대장간 | 이미 직업 `대장장이`가 존재 — 그 직업의 work 시드용 배경으로 잘 맞음 |
-| 방앗간 | 곡물 가공 관련 생계 장면 |
-| 빵집 · 제과점 | 생계/코미디류에 어울리는 소규모 상업 공간 |
-| 양조장 · 술도가 | comedy/social류(취객 등장 장면 등)와 연결 |
-| 다리 | 마을 진입로, 만남/사건이 자주 일어나는 통로형 공간 |
-| 성문 · 관문 | 검문/여행 시작·끝 장면 |
+**마을을 이루는 장소** (여관은 이미 실측 근거가 있어 1순위)
+
+| 파일명(안) | 후보 | 프롬프트 키워드 |
+|---|---|---|
+| `inn.png` | 여관/술집 내부 | `dim candlelit tavern interior, long wooden tables and mismatched benches, a stone hearth with a low fire, hanging pots and dried herbs, a few empty tankards on the bar, warm inviting but slightly worn atmosphere, warm amber and dark wood tones` |
+| `stable.png` | 외양간 · 마구간 | `rustic wooden stable interior, straw-covered floor, empty wooden stalls and a low hay loft, dusty light filtering through slatted walls, humble working-animal atmosphere, muted straw-yellow and weathered wood tones` |
+| `forge.png` | 대장간 | `blacksmith's forge workshop, a glowing hearth and anvil at the center, hanging tools and half-finished ironwork, soot-darkened stone walls, warm ember glow against dim surroundings, muted charcoal-black and ember-orange tones` |
+| `mill.png` | 방앗간 | `old grain mill interior, large wooden gears and a stone grinding wheel, sacks of flour stacked along the walls, fine dust drifting in low light through a small window, quiet laborious atmosphere, muted flour-white and warm wood tones` |
+| `bakery.png` | 빵집 · 제과점 | `small pre-modern bakery interior, a brick oven glowing with embers, loaves of bread cooling on wooden shelves, flour dusting the worn counter, warm homely atmosphere, warm golden-brown and cream tones` |
+| `brewery.png` | 양조장 · 술도가 | `modest brewery interior, rows of wooden barrels and a large fermenting vat, dim lantern light, damp stone floor, quiet industrious atmosphere with a faint air of mischief, muted amber and dark oak tones` |
+| `bridge.png` | 다리 | `old wooden footbridge crossing a quiet river at the village edge, weathered planks and a simple rope rail, mist drifting low over the water, a liminal crossing-point mood, muted grey-blue and soft green tones` |
+| `gate.png` | 성문 · 관문 | `sturdy wooden village gate flanked by a low stone wall, a simple guard post beside the entrance, a dirt road leading through, overcast travel-worn atmosphere, muted stone-grey and dull brown tones` |
 
 **자연의 장소**
-| 후보 | 비고 |
-|---|---|
-| 강가 · 개울 | `dock`(부두, 화물·배 중심)과 달리 순수 자연 물가 — 뱃사공이 아니어도 나올 법한 장면 |
-| 언덕 · 구릉 | 원경을 내려다보는 구도, 전환점적 장면에 어울림 |
-| 동굴 | mystery/horror류와 잘 맞는 폐쇄 공간 |
-| 폭포 | danger/mystery류의 랜드마크형 장소 |
-| 초원 · 들판 | `field`(밭, 경작지)와 달리 사람 손이 안 닿은 야생 초지 |
-| 습지 · 늪 | horror/danger류의 음습한 자연 공간 |
+
+| 파일명(안) | 후보 | 프롬프트 키워드 |
+|---|---|---|
+| `riverside.png` | 강가 · 개울 | `quiet natural riverbank with smooth stones and shallow flowing water, overhanging reeds and wildflowers at the edge, soft daylight reflecting off the water, calm untouched atmosphere, muted blue-green and natural tones` |
+| `hill.png` | 언덕 · 구릉 | `rolling grassy hillside with a wide overlook toward a distant valley, a lone windswept tree near the crest, wide open sky, contemplative turning-point mood, muted sage-green and soft grey-blue tones` |
+| `cave.png` | 동굴 | `dark natural cave interior, damp uneven rock walls, a narrow shaft of light from a distant opening, faint dripping water implied, closed-in unsettling atmosphere, muted cold grey and deep shadow tones` |
+| `waterfall.png` | 폭포 | `tall forest waterfall crashing into a misty rocky pool, moss-covered stones, dense surrounding trees, dramatic natural landmark mood, muted deep green and cool white-mist tones` |
+| `grassland.png` | 초원 · 들판 | `vast untouched wild grassland stretching to the horizon, tall swaying grass and scattered wildflowers, wide open sky, free unbounded natural mood, muted golden-green and soft sky-blue tones` |
+| `swamp.png` | 습지 · 늪 | `murky wetland with still dark water and twisted half-submerged tree roots, low hanging mist, muddy uneven ground, oppressive damp atmosphere, muted swamp-green and dull brown tones` |
 
 **상황을 알 수 있는 장소** (사건성이 뚜렷한 공간)
-| 후보 | 비고 |
-|---|---|
-| 묘지 | horror/mystery류, "죽음은 끝"이라는 세계관 규칙과도 자연스럽게 연결 |
-| 병영 · 막사 | danger류, 전쟁/패잔병 배경 설정(01-world-setting.md)과 연결 |
-| 재판정 · 법정 | `office`(관공서)와 결이 겹칠 수 있어 실측 후 필요성 재확인 필요 |
-| 학교 · 서당 | social/work류의 조용한 실내 공간 |
 
-우선순위는 아직 안 매김 — Phase 1처럼 실제 시드/AI 생성 텍스트에서 얼마나 자주 나오는지 실측한 뒤
-정하는 걸 권장(특히 "여관"은 이미 실측 근거가 있어 다음 착수 1순위로 보임).
+| 파일명(안) | 후보 | 프롬프트 키워드 |
+|---|---|---|
+| `graveyard.png` | 묘지 | `quiet rural graveyard with weathered stone markers and a few simple wooden crosses, overgrown grass and a bare leaning tree, overcast dim light, solemn final-resting mood, muted grey and faded moss-green tones` |
+| `barracks.png` | 병영 · 막사 | `spartan military barracks interior, rows of simple cots and stacked equipment, a worn wooden table with maps or gear, dim utilitarian lighting, tense disciplined atmosphere, muted olive and iron-grey tones` |
+| `courthouse.png` | 재판정 · 법정 | `modest pre-industrial courtroom hall, a raised wooden bench at the far end, rows of plain benches facing it, tall narrow windows casting solemn light, formal weighty atmosphere, muted stone-grey and dark wood tones` |
+| `school.png` | 학교 · 서당 | `simple village schoolroom, low wooden desks and a chalk-less slate board, scrolls or books stacked on a shelf, soft daylight through a modest window, quiet studious atmosphere, muted warm beige and soft wood tones` |
+
+우선순위는 여전히 미확정 — 실측 근거가 있는 `여관/술집`을 1순위로 먼저 만들고, 실제 이미지가
+나오는 대로 파일명만 알려주면 Phase 10과 동일한 순서(태그 추가 → 키워드 매핑 → `BackgroundScene.tsx`
+연결 → 자리표시자 → 실제 아트 교체)로 코드에 연결한다. `재판정·법정`은 `office`(관공서)와 결이
+겹칠 수 있어 둘 다 만들 경우 실측 후 통합 여부를 재확인하는 게 좋다.

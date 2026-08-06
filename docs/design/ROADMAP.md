@@ -52,7 +52,7 @@
 
 - [x] Phase 1~10 완료(2026-08-03~06, 자세한 내용은 [07-background-art-prompts.md](./07-background-art-prompts.md)) — `SceneTag` 16종(city/forest/market/danger/social/indoor/cell/stairs/alley/visitation/office/warehouse/dock/field/well/square) 전부 실제 아트 확보, Phase 5 무드(희노애락+공포) 소분류 13종도 실제 아트 완료
 - [x] 배경-지문 불일치 제보가 들어올 때마다 원인 분석 후 키워드/태그 보강하는 사이클을 반복 중(감옥→`감옥` 키워드 누락, 창고→`나무` 오탐, 여관 대화→페이지 단위가 아니라 situation 전체를 검사하던 문제 등) — 앞으로도 계속될 수 있는 유형의 이슈이니 스크린샷 제보 시 같은 방식으로 대응
-- [ ] **Phase 11 후보**: 외양간/마구간/대장간 등 마을 장소, 강가/언덕/동굴 등 자연 장소, 묘지/병영 등 상황 장소 — 리스트만 작성해둠(2026-08-06), 프롬프트/구현은 아직. [07-background-art-prompts.md](./07-background-art-prompts.md#phase-11-후보--추가-배경-장소-리스트업만-2026-08-06-사용자-요청) 참고. `여관/술집`이 실측 근거(이번 제보) 있어 우선순위 1순위
+- [ ] **Phase 11**: 외양간/마구간/대장간 등 마을 장소, 강가/언덕/동굴 등 자연 장소, 묘지/병영 등 상황 장소 18종 — 프롬프트 전부 확정 완료(2026-08-06), 실제 이미지 생성·코드 연결은 아직. [07-background-art-prompts.md](./07-background-art-prompts.md#phase-11--추가-배경-장소-18종-프롬프트-확정-2026-08-06-사용자-요청) 참고. `여관/술집`이 실측 근거(이번 제보) 있어 우선순위 1순위
 
 ## 7. 서사 연속성 (다일 스토리 스레드)
 
