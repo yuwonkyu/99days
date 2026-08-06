@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Character } from '../types/character';
-import { GameState, StoryThread, TOTAL_DAYS } from '../types/game';
+import { ChoiceLogEntry, GameState, StoryThread, TOTAL_DAYS } from '../types/game';
 import { TurnSource, getNextTurn } from '../engine/turnService';
 import { buildTurnContext } from '../engine/promptBuilder';
 import { buildStoryDirective, generateCrisisDays } from '../engine/storyFlow';
@@ -169,6 +169,10 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
 
     const updatedCharacter = applyStatDelta(gameState.character, response.stat_changes);
     const newDayLogs = [...gameState.dayLogs, response.day_summary];
+    const newChoiceLog: ChoiceLogEntry[] = [
+      ...(gameState.choiceLog ?? []),
+      { day: gameState.day, choice: chosenChoice, summary: response.day_summary },
+    ];
     const newSceneModes = [...(gameState.recentSceneModes ?? []), storyDirective.sceneMode].slice(-6);
     const newUsedSeedIds = usedSeedId
       ? resetUsedSeeds
@@ -201,6 +205,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       lastPlayedAt: Date.now(),
       isEnded: false,
       activeThread: newActiveThread,
+      choiceLog: newChoiceLog,
     };
     await saveGameState(newState);
     setGameState(newState);
@@ -241,9 +246,14 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
     );
   }
 
+  // 배경은 situation 전체(여러 페이지 분량)가 아니라 지금 보이는 페이지 텍스트만 보고 고른다 —
+  // 3페이지짜리 상황의 1페이지가 실내 대화인데 2~3페이지 어딘가의 "숲" 언급 때문에 숲 배경이
+  // 뜨는 식의 불일치가 실제로 있었다(2026-08-06 제보). 페이지를 넘길 때마다 배경도 그 페이지
+  // 내용에 맞게 다시 계산된다.
   const currentSceneMode = gameState.recentSceneModes?.[gameState.recentSceneModes.length - 1];
-  const sceneTag = inferSceneTag(gameState.currentSituation, currentSceneMode);
-  const sceneMood = inferMood(gameState.currentSituation);
+  const backgroundText = currentPage?.text ?? gameState.currentSituation;
+  const sceneTag = inferSceneTag(backgroundText, currentSceneMode);
+  const sceneMood = inferMood(backgroundText);
   const isCrisisToday = (gameState.crisisDays ?? []).includes(gameState.day);
 
   return (
@@ -320,6 +330,7 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
         character={gameState.character}
         day={gameState.day}
         totalDays={TOTAL_DAYS}
+        choiceLog={gameState.choiceLog ?? []}
         onClose={() => setStatusVisible(false)}
         onGiveUp={handleGiveUp}
       />

@@ -1,5 +1,5 @@
 import { SceneMode } from '../types/game';
-import { eunNeun, iGa, eulReul } from '../engine/korean';
+import { eunNeun, iGa, eulReul, euroRo } from '../engine/korean';
 import { JOBS, JobCategory } from './jobs';
 
 /**
@@ -105,7 +105,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-danger-2',
       mode: 'outdoor',
       category: 'danger',
-      situation: `사냥감을 쫓던 ${name}${이가} 오히려 부상당한 맹수와 정면으로 마주친다. 궁지에 몰린 짐승의 눈이 사납다.`,
+      situation: `${pick(TIME_MOODS)}, 사냥감을 쫓던 ${name}${이가} 오히려 부상당한 맹수와 정면으로 마주친다. 궁지에 몰린 짐승의 눈이 사납다.`,
       choices: [
         { text: '천천히 물러선다', lean: 'safe' },
         { text: '무기를 들고 대응한다', lean: 'risky' },
@@ -139,7 +139,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-work-2',
       mode: 'outdoor',
       category: 'work',
-      situation: `${pick(TIME_MOODS)}, ${job}으로서 오늘 맡은 일이 예상보다 커졌다. 도와줄 사람은 없고, 서둘러야 한다.`,
+      situation: `${pick(TIME_MOODS)}, ${job}${euroRo(job)}서 오늘 맡은 일이 예상보다 커졌다. 도와줄 사람은 없고, 서둘러야 한다.`,
       choices: [
         { text: '혼자서라도 끝까지 해본다', lean: 'risky' },
         { text: '할 수 있는 만큼만 하고 내일로 미룬다', lean: 'safe' },
@@ -162,7 +162,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-social-1',
       mode: 'outdoor',
       category: 'social',
-      situation: `저녁, 마을 사람들이 모임을 갖는 자리에 ${personality} ${name}도 어울리게 된다. 누군가 ${job}에 대해 농담을 던진다.`,
+      situation: `${pick(TIME_MOODS)}, 마을 사람들이 모임을 갖는 자리에 ${personality} ${name}도 어울리게 된다. 누군가 ${job}에 대해 농담을 던진다.`,
       choices: [
         { text: '웃어넘긴다', lean: 'safe' },
         { text: '정색하며 받아친다', lean: 'risky' },
@@ -197,7 +197,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-mystery-1',
       mode: 'outdoor',
       category: 'mystery',
-      situation: `숲 가장자리에서 ${personality} 성격의 ${name}${이가} 낯선 발자국을 발견한다. 사람 것치고는 너무 크고, 짐승 것치고는 너무 규칙적이다.`,
+      situation: `${pick(TIME_MOODS)}, 숲 가장자리에서 ${personality} 성격의 ${name}${이가} 낯선 발자국을 발견한다. 사람 것치고는 너무 크고, 짐승 것치고는 너무 규칙적이다.`,
       choices: [
         { text: '발자국을 따라가 본다', lean: 'risky' },
         { text: '거리를 두고 지켜본다', lean: 'neutral' },
@@ -223,7 +223,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-mystery-3',
       mode: 'outdoor',
       category: 'mystery',
-      situation: `늘 다니던 길에 못 보던 샛길이 나 있다. ${name}${은는} 그 길이 어디로 이어지는지 문득 궁금해진다.`,
+      situation: `${pick(TIME_MOODS)}, 늘 다니던 길에 못 보던 샛길이 나 있다. ${name}${은는} 그 길이 어디로 이어지는지 문득 궁금해진다.`,
       choices: [
         { text: '호기심을 참지 못하고 들어가 본다', lean: 'risky' },
         { text: '다음에 시간 날 때 살펴보기로 한다', lean: 'safe' },
@@ -275,7 +275,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-comedy-1',
       mode: 'outdoor',
       category: 'comedy',
-      situation: `술에 취한 사내가 ${name}${을를} 다른 사람으로 착각하고 대뜸 시비를 건다. 주변 사람들이 구경하기 시작한다.`,
+      situation: `${pick(TIME_MOODS)}, 술에 취한 사내가 ${name}${을를} 다른 사람으로 착각하고 대뜸 시비를 건다. 주변 사람들이 구경하기 시작한다.`,
       choices: [
         { text: '사람 잘못 봤다고 차분히 설명한다', lean: 'safe' },
         { text: '똑같이 큰소리로 맞선다', lean: 'risky' },
@@ -309,7 +309,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'sh-danger-1',
       mode: 'shelter',
       category: 'danger',
-      situation: `${name}의 거처 문에 억지로 열려 한 흔적이 남아 있다. 자는 사이 누군가 다녀간 것 같다.`,
+      situation: `${pick(TIME_MOODS)}, ${name}의 거처 문에 억지로 열려 한 흔적이 남아 있다. 자는 사이 누군가 다녀간 것 같다.`,
       choices: [
         { text: '문단속을 강화하고 밤을 지새운다', lean: 'safe' },
         { text: '주변을 뒤져 흔적을 쫓는다', lean: 'risky' },
@@ -332,7 +332,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'sh-danger-3',
       mode: 'shelter',
       category: 'danger',
-      situation: `빚쟁이 몇 명이 ${name}의 거처 앞까지 찾아와 문을 두드리며 소란을 피운다.`,
+      situation: `${pick(TIME_MOODS)}, 빚쟁이 몇 명이 ${name}의 거처 앞까지 찾아와 문을 두드리며 소란을 피운다.`,
       choices: [
         { text: '문을 열고 사정을 이야기한다', lean: 'neutral' },
         { text: '끝까지 문을 열지 않는다', lean: 'safe' },
@@ -390,7 +390,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'sh-social-2',
       mode: 'shelter',
       category: 'social',
-      situation: `같이 지내는 이와 사소한 일로 말다툼이 커진다. 좁은 거처 안이라 피할 곳도 마땅치 않다.`,
+      situation: `${pick(TIME_MOODS)}, 같이 지내는 이와 사소한 일로 말다툼이 커진다. 좁은 거처 안이라 피할 곳도 마땅치 않다.`,
       choices: [
         { text: '먼저 사과하고 넘어간다', lean: 'safe' },
         { text: '끝까지 할 말을 다 한다', lean: 'risky' },
@@ -425,7 +425,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'sh-mystery-2',
       mode: 'shelter',
       category: 'mystery',
-      situation: `짐을 정리하던 ${name}${은는} 자기 것이 아닌 물건 하나를 발견한다. 언제 어떻게 들어왔는지 짐작이 가지 않는다.`,
+      situation: `${pick(TIME_MOODS)}, 짐을 정리하던 ${name}${은는} 자기 것이 아닌 물건 하나를 발견한다. 언제 어떻게 들어왔는지 짐작이 가지 않는다.`,
       choices: [
         { text: '주인을 수소문해 본다', lean: 'neutral' },
         { text: '일단 잘 보관해 둔다', lean: 'safe' },
@@ -474,7 +474,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'sh-horror-3',
       mode: 'shelter',
       category: 'horror',
-      situation: `자다 깬 ${name}${은는} 방 안의 물건들이 자기가 두었던 자리와 조금씩 다르다는 걸 알아챈다.`,
+      situation: `${pick(TIME_MOODS)}, 자다 깬 ${name}${은는} 방 안의 물건들이 자기가 두었던 자리와 조금씩 다르다는 걸 알아챈다.`,
       choices: [
         { text: '기분 탓이라 여기고 다시 눕는다', lean: 'safe' },
         { text: '밤새 뜬눈으로 지켜본다', lean: 'risky' },
@@ -487,7 +487,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'sh-comedy-1',
       mode: 'shelter',
       category: 'comedy',
-      situation: `키우던 닭이 방 안까지 들어와 애써 정리한 살림을 온통 헤집어 놓았다. ${name}${은는} 할 말을 잃는다.`,
+      situation: `${pick(TIME_MOODS)}, 키우던 닭이 방 안까지 들어와 애써 정리한 살림을 온통 헤집어 놓았다. ${name}${은는} 할 말을 잃는다.`,
       choices: [
         { text: '한숨 쉬며 다시 정리한다', lean: 'safe' },
         { text: '닭을 쫓아다니며 잡으려 한다', lean: 'risky' },
@@ -532,7 +532,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-bond-2',
       mode: 'outdoor',
       category: 'bond',
-      situation: `길에서 곤경에 처한 이를 도와준 인연으로, 그 사람이 ${personality} ${name}에게 은근한 호감을 내비친다.`,
+      situation: `${pick(TIME_MOODS)}, 길에서 곤경에 처한 이를 도와준 인연으로, 그 사람이 ${personality} ${name}에게 은근한 호감을 내비친다.`,
       choices: [
         { text: '마음을 솔직히 표현해본다', lean: 'risky' },
         { text: '천천히 시간을 두고 지켜본다', lean: 'neutral' },
@@ -593,7 +593,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-danger-4',
       mode: 'outdoor',
       category: 'danger',
-      situation: `길 한복판에서 갑자기 놀란 말 한 마리가 고삐 풀린 채 ${name}${을를} 향해 곧장 달려온다. 피할 틈이 많지 않다.`,
+      situation: `${pick(TIME_MOODS)}, 길 한복판에서 갑자기 놀란 말 한 마리가 고삐 풀린 채 ${name}${을를} 향해 곧장 달려온다. 피할 틈이 많지 않다.`,
       choices: [
         { text: '재빨리 옆으로 몸을 던진다', lean: 'safe' },
         { text: '고삐를 붙잡아 세워본다', lean: 'risky' },
@@ -604,7 +604,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'sh-comedy-4',
       mode: 'shelter',
       category: 'comedy',
-      situation: `조용히 지내던 중, 이웃집 짐승이 울타리를 넘어와 ${name}의 빨래를 죄다 물어뜯어 놓았다.`,
+      situation: `${pick(TIME_MOODS)}, 조용히 지내던 중 이웃집 짐승이 울타리를 넘어와 ${name}의 빨래를 죄다 물어뜯어 놓았다.`,
       choices: [
         { text: '짐승을 쫓아내고 주인을 찾아간다', lean: 'neutral' },
         { text: '그냥 웃어넘기고 다시 넌다', lean: 'safe' },
@@ -626,7 +626,7 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
       id: 'od-bond-3',
       mode: 'outdoor',
       category: 'bond',
-      situation: `${job}으로서 해온 일을 눈여겨보던 이가 ${personality} ${name}에게 진심 어린 칭찬을 건넨다. 오랜만에 마음이 뿌듯해진다.`,
+      situation: `${pick(TIME_MOODS)}, ${job}${euroRo(job)}서 해온 일을 눈여겨보던 이가 ${personality} ${name}에게 진심 어린 칭찬을 건넨다. 오랜만에 마음이 뿌듯해진다.`,
       choices: [
         { text: '고마움을 표현하며 대화를 이어간다', lean: 'neutral' },
         { text: '쑥스러워 얼버무리고 만다', lean: 'safe' },

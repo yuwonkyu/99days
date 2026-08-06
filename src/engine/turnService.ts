@@ -14,32 +14,43 @@ export interface TurnResult {
 }
 
 /**
- * Tries the live AI game master first; falls back to the local offline
- * generator if the Worker/Anthropic call fails for any reason (not deployed,
- * network error, rate limited, schema mismatch). See docs/design/04-ai-gamemaster-prompt.md.
+ * 2026-08-06 사용자 피드백: AI 요금 부담이 커서 99일 중 AI 생성 비중을 10% 이하로 낮추고 싶다는
+ * 요청 — 이전에는 매 턴 AI를 먼저 시도하고 실패할 때만 오프라인으로 폴백했지만(1판 완주에 최대
+ * ~100회 호출), 그 방식 자체가 비용을 좌우하는 구조였다. 이제는 매 턴 이 확률로만 AI 시도 여부를
+ * 먼저 굴리고, 당첨되지 않으면 네트워크 요청조차 하지 않고 바로 오프라인 생성기로 간다 — 오프라인
+ * 생성기는 "장애 시에만 쓰는 열화판"이 아니라 그 자체로 제대로 만든 1급 경로이므로 이렇게 써도
+ * 품질이 크게 떨어지지 않는다(콘텐츠 다양성은 별도로 계속 확충 중).
+ */
+const AI_ATTEMPT_RATE = 0.1;
+
+/**
+ * 당첨된 턴에 한해 AI 게임마스터를 시도하고, 실패하면(또는 애초에 당첨되지 않았으면) 로컬 오프라인
+ * 생성기로 대체한다. See docs/design/04-ai-gamemaster-prompt.md.
  *
- * When an activeThread is open, one retry happens before giving up on the AI. The offline
- * generator can't continue a thread's specific people/places (see offlineGenerator.ts's
- * buildThreadClosurePrefix) — it always forcibly resolves the thread and jumps to an unrelated
- * seed, which reads as the story randomly jumping tracks mid-arc. A single transient blip (one
- * dropped request, one rate-limit) shouldn't be enough to sever an in-progress story; a plain
- * day-to-day turn with no thread to lose falls back immediately as before.
+ * activeThread가 열려 있는 상태로 AI를 시도했다가 실패하면 한 번 재시도한다. 오프라인 생성기는
+ * 스레드의 구체적 인물/장소를 이어 쓸 수 없어(offlineGenerator.ts의 buildThreadClosurePrefix)
+ * 항상 그 스레드를 강제로 닫고 무관한 새 시드로 넘어가는데, 일시적인 오류 한 번 때문에 진행 중인
+ * 이야기를 끊기엔 아깝기 때문이다. (다만 AI 시도 자체가 이제 10%로 줄었으므로, 스레드가 열려도
+ * 다음 턴에 대개는 AI가 아예 시도되지 않아 자연스럽게 닫히는 경우가 많아졌다 — 대화가 계속 길게
+ * 이어지기보다 하루 단위로 결론이 나길 바란다는 피드백과도 방향이 맞는다.)
  */
 export async function getNextTurn(context: TurnContext, usedSeedIds: string[] = []): Promise<TurnResult> {
-  try {
-    const response = await requestAiTurn(context);
-    return { response: clampTurnResponse(response), source: 'ai' };
-  } catch (err) {
-    if (!(err instanceof AiUnavailableError)) throw err;
-    if (context.activeThread) {
-      try {
-        const retryResponse = await requestAiTurn(context);
-        return { response: clampTurnResponse(retryResponse), source: 'ai' };
-      } catch (retryErr) {
-        if (!(retryErr instanceof AiUnavailableError)) throw retryErr;
+  if (Math.random() < AI_ATTEMPT_RATE) {
+    try {
+      const response = await requestAiTurn(context);
+      return { response: clampTurnResponse(response), source: 'ai' };
+    } catch (err) {
+      if (!(err instanceof AiUnavailableError)) throw err;
+      if (context.activeThread) {
+        try {
+          const retryResponse = await requestAiTurn(context);
+          return { response: clampTurnResponse(retryResponse), source: 'ai' };
+        } catch (retryErr) {
+          if (!(retryErr instanceof AiUnavailableError)) throw retryErr;
+        }
       }
     }
-    const { response, usedSeedId, resetUsedSeeds } = generateOfflineTurn(context, usedSeedIds);
-    return { response: clampTurnResponse(response), source: 'offline', usedSeedId, resetUsedSeeds };
   }
+  const { response, usedSeedId, resetUsedSeeds } = generateOfflineTurn(context, usedSeedIds);
+  return { response: clampTurnResponse(response), source: 'offline', usedSeedId, resetUsedSeeds };
 }

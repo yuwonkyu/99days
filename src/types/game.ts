@@ -53,6 +53,13 @@ export interface StoryThread {
 /** 하루의 큰 활동 성격 — Doc 04: 반복 방지/흐름 유도용 힌트. `외출`(여정/순찰/사냥/교역/탐색) vs `거처`(방어/은신/은폐/거주/피난). */
 export type SceneMode = 'outdoor' | 'shelter';
 
+/** 99일 동안 고른 선택지가 많아지면 뭘 골랐는지 잊어버린다는 피드백(2026-08-06) — 날짜별로 무엇을 골랐고 그 결과가 어떻게 요약됐는지 남겨서 상태 패널에서 조회할 수 있게 한다. */
+export interface ChoiceLogEntry {
+  day: number;
+  choice: string;
+  summary: string;
+}
+
 /**
  * 매 턴 AI/오프라인 생성기에 함께 전달하는 서사 진행 힌트. 코드가 결정하는 보조적인
  * 흐름 유도 장치로, 99일 전체를 관통하는 단계감과 장면 다양성을 만드는 데 쓴다.
@@ -105,4 +112,6 @@ export interface GameState {
   isEnded: boolean;
   /** Doc 04: the multi-day story thread currently in progress, if any — undefined when the last turn was self-contained or just closed one. */
   activeThread?: StoryThread;
+  /** 날짜별 선택 기록 — optional: 이 필드가 생기기 전에 저장된 게임에는 없을 수 있음. */
+  choiceLog?: ChoiceLogEntry[];
 }
