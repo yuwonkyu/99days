@@ -181,7 +181,11 @@ export default function GameScreen({ initialCharacter, onEnded }: Props) {
       : gameState.usedSeedIds ?? [];
 
     if (updatedCharacter.hp <= 0) {
-      const text = pickEndingText({ type: 'death', recentDayLogs: newDayLogs.slice(-3) });
+      const text = pickEndingText({
+        type: 'death',
+        recentDayLogs: newDayLogs.slice(-3),
+        wasCrisisDeath: crisisDays.includes(gameState.day),
+      });
       await endGame(updatedCharacter, newDayLogs, gameState.day, text);
       return;
     }

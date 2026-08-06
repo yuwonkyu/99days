@@ -1,6 +1,7 @@
 import { AITurnResponse, StatDelta, TurnContext } from '../types/game';
 import { applyLuckBias, sampleOutcomeTier, OutcomeDistribution, OutcomeTier } from './statGen';
 import { ChoiceLean, SituationCategory, TIME_MOODS } from '../data/situationSeeds';
+import { iGa } from './korean';
 import {
   buildKnownChoiceMeta,
   inferChoiceCategory,
@@ -151,10 +152,15 @@ const CRISIS_OUTCOME_TEXT: Record<OutcomeTier, (choice: string) => string> = {
   bad: (choice) => `"${choice}" 쪽을 택했지만 결국 크게 당하고 말았다. 정신이 아득해질 만큼 위태로운 상태다.`,
 };
 
+// 2026-08-06 실플레이 제보: 위기 사망(엔딩 텍스트)이 "잠들듯 평온하게" 처리됨 — 이 문구들이
+// danger 키워드(situationSelector.ts의 CATEGORY_KEYWORDS)를 하나도 안 담고 있어 inferCategory가
+// null을 반환했던 게 근본 원인 중 하나. endingSelector.ts에 wasCrisisDeath로 확정 신호를 넘기는
+// 걸로 주 원인은 고쳤지만, day_summary 자체도(선택 기록 탭 등에 그대로 노출되므로) "위험" 계열
+// 어휘를 담도록 정리 + 티어당 여러 문구로 다양화.
 const CRISIS_DAY_SUMMARIES: Record<OutcomeTier, string[]> = {
-  good: ['생사를 오간 위기를 구사일생으로 넘겼다.'],
-  neutral: ['위기 속에서 크게 다쳤지만 살아남았다.'],
-  bad: ['죽음의 문턱까지 갔다 겨우 살아 돌아왔다.'],
+  good: ['목숨을 위협하는 위험천만한 순간을 구사일생으로 넘겼다.', '아슬아슬했지만 큰 위험을 피해 살아남았다.'],
+  neutral: ['위험한 상황에서 크게 다쳤지만 겨우 살아남았다.', '큰 부상을 입었지만 목숨은 건졌다.'],
+  bad: ['위험천만한 순간, 손쓸 새도 없이 치명적인 부상을 입었다.', '피할 새도 없이 크게 당해 정신을 잃었다.'],
 };
 
 function pick<T>(arr: T[]): T {
@@ -168,7 +174,7 @@ function pick<T>(arr: T[]): T {
  */
 function buildTransitionPrefix(day: number, timeSkip: boolean, timeSkipLabel: string | undefined, situationText: string): string {
   if (day <= 1) return '';
-  if (timeSkip && timeSkipLabel) return `그로부터 ${timeSkipLabel}이 지나, `;
+  if (timeSkip && timeSkipLabel) return `그로부터 ${timeSkipLabel}${iGa(timeSkipLabel)} 지나, `;
   // 시드 자체에 이미 시간대 표현이 있으면 "다음 날,"과 겹쳐 어색해지므로 생략
   if (TIME_MOODS.some((mood) => situationText.startsWith(mood))) return '';
   return '다음 날, ';

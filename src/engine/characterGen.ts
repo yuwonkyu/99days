@@ -1,4 +1,4 @@
-import { Character, CharacterGenOptions, Gender, BodyType, RegionId } from '../types/character';
+import { Character, CharacterGenOptions, Gender, BodyType, RegionId, Stats } from '../types/character';
 import { REGIONS, getRegion } from '../data/origins';
 import { getJob, JOBS } from '../data/jobs';
 import { randomName } from '../data/names';
@@ -17,16 +17,33 @@ function randomAge(): number {
   return Math.round(clamp(gaussianRandom(24, 14), 8, 75));
 }
 
-function randomBodyType(age: number, gender: Gender): BodyType {
+/**
+ * 2026-08-06 실플레이 제보: 26세 학자가 164cm/39kg(BMI 14.5, 기아 수준)로 나왔는데 isHybrid도
+ * 아니었음 — "돌연변이라 가능은 하지만 의도한 거면 인정, 아니면 오류"라는 지적대로, isHybrid
+ * 플래그가 실제로는 체형 굴림에 전혀 관여하지 않고 있었다(태그만 붙고 수치는 완전히 무관하게
+ * 독립 굴림). 혼종이 아닌 일반 캐릭터는 BMI 클램프 범위를 좁혀 기아/고도비만 수준까지는 잘
+ * 안 나오게 하고, 그 극단치는 isHybrid(5% 확률)에게만 허용해 태그와 수치가 실제로 맞물리게 함.
+ */
+function randomBodyType(age: number, gender: Gender, isHybrid: boolean): BodyType {
   const adultHeight = gender === 'male' ? 172 : 160;
   const growth = clamp(age / 18, 0.55, 1);
   let heightCm = gaussianRandom(adultHeight, 7) * growth;
   if (age > 60) heightCm *= 0.97;
   heightCm = clamp(heightCm, 90, 210);
   const heightM = heightCm / 100;
-  const bmi = clamp(gaussianRandom(21.5, 3.5), 14, 35);
+  const [bmiMin, bmiMax] = isHybrid ? [14, 35] : [16.5, 30];
+  const bmi = clamp(gaussianRandom(21.5, 3.5), bmiMin, bmiMax);
   const weightKg = clamp(bmi * heightM * heightM, 15, 150);
   return { heightCm: Math.round(heightCm), weightKg: Math.round(weightKg) };
+}
+
+function mergeTendency(a: Partial<Stats>, b: Partial<Stats>): Partial<Stats> {
+  return {
+    STR: (a.STR ?? 0) + (b.STR ?? 0),
+    INT: (a.INT ?? 0) + (b.INT ?? 0),
+    AGI: (a.AGI ?? 0) + (b.AGI ?? 0),
+    LUK: (a.LUK ?? 0) + (b.LUK ?? 0),
+  };
 }
 
 /** 직업 카테고리(5종) 단위 폴백 — 아래 STARTER_ITEMS_BY_JOB에 없는 직업 id가 추가되면 여기로 떨어진다. */
@@ -63,6 +80,8 @@ const STARTER_ITEMS_BY_JOB: Record<string, string[]> = {
   squire: ['녹슨 단검', '방패 조각'],
   farmhand: ['괭이', '여벌 옷'],
   mason: ['정과 망치', '돌가루 묻은 앞치마'],
+  knight: ['가문 문장이 새겨진 방패', '녹슨 단검'],
+  troubadour: ['현이 낡은 류트', '여벌 옷'],
 };
 
 function generateId(): string {
@@ -77,14 +96,14 @@ export function generateRandomCharacter(options: CharacterGenOptions = {}): Char
   const gender = randomGender();
   const age = randomAge();
   const isTalented = Math.random() < 0.1;
-  const stats = rollStats(region.statTendency, isTalented);
-  const bodyType = randomBodyType(age, gender);
   const isHybrid = Math.random() < hybridChance;
   const eligibleJobIds =
     age < 14 ? region.jobIds.filter((id) => getJob(id).category !== 'combat') : region.jobIds;
   const jobPool = eligibleJobIds.length > 0 ? eligibleJobIds : region.jobIds;
   const jobId = jobPool[Math.floor(Math.random() * jobPool.length)];
   const job = getJob(jobId);
+  const stats = rollStats(mergeTendency(region.statTendency, job.statTendency ?? {}), isTalented);
+  const bodyType = randomBodyType(age, gender, isHybrid);
   const personality = randomPersonality();
   const name = nameOverride?.trim() || randomName(regionId, gender);
   const hp = computeHP(stats, age, bodyType, job.category);

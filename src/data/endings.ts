@@ -15,6 +15,9 @@ export const ENDING_TEXTS: Record<EndingType, Partial<Record<EndingMood, string[
       '지친 몸이 결국 버티지 못하고 쓰러졌다.',
       '이루지 못한 것들을 뒤로한 채 눈을 감았다.',
       '그 흔한 작별 인사도 남기지 못했다.',
+      '피할 틈도 없이, 순식간에 모든 것이 끝나 버렸다.',
+      '손 쓸 겨를도 없이 그 자리에서 숨이 끊어졌다.',
+      '비명조차 지르지 못한 채, 그렇게 삶이 끝났다.',
     ],
     horror: [
       '무엇을 보았는지, 끝내 아무도 알지 못했다.',
@@ -23,6 +26,8 @@ export const ENDING_TEXTS: Record<EndingType, Partial<Record<EndingMood, string[
       '마지막 흔적은 소름 끼치는 침묵뿐이었다.',
       '무엇에 쫓기듯, 뒤를 돌아본 채로 굳어 있었다.',
       '왜 그곳에 있었는지는 끝내 밝혀지지 않았다.',
+      '무엇에 짓밟혔는지, 발견된 자리는 처참했다.',
+      '남은 것은 흩어진 흔적과 정적뿐이었다.',
     ],
     absurd: [
       '허무하게도, 별것 아닌 일로 삶이 끝나버렸다.',

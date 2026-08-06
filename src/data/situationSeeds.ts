@@ -230,6 +230,28 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
         { text: '마을 사람들에게 물어본다', lean: 'neutral' },
       ],
     },
+    {
+      id: 'od-mystery-4',
+      mode: 'outdoor',
+      category: 'mystery',
+      situation: `${pick(TIME_MOODS)}, ${name}${이가} 길가 바위에 낯선 표식이 새겨진 것을 발견한다. 최근에 새긴 듯 흠집이 선명하다.`,
+      choices: [
+        { text: '표식을 따라가 본다', lean: 'risky' },
+        { text: '마을 어른에게 물어본다', lean: 'neutral' },
+        { text: '대수롭지 않게 여기고 지나친다', lean: 'safe' },
+      ],
+    },
+    {
+      id: 'od-mystery-5',
+      mode: 'outdoor',
+      category: 'mystery',
+      situation: `${pick(TIME_MOODS)}, 수풀 사이에 반쯤 파묻힌 낡은 자루 하나가 눈에 띈다. 안에 무엇이 들었는지 묵직해 보인다.`,
+      choices: [
+        { text: '열어서 확인한다', lean: 'risky' },
+        { text: '근처에 주인이 있는지 살펴본다', lean: 'neutral' },
+        { text: '그대로 둔 채 자리를 뜬다', lean: 'safe' },
+      ],
+    },
 
     // OUTDOOR × horror
     {
@@ -269,6 +291,17 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
         { text: '불빛이 있는 곳으로 방향을 튼다', lean: 'neutral' },
       ],
     },
+    {
+      id: 'od-horror-4',
+      mode: 'outdoor',
+      category: 'horror',
+      situation: `${pick(TIME_MOODS)}, 늘 다니던 다리 아래 물이 이상하리만치 흐르지 않고 멈춰 있다. ${name}${은는} 이유 모를 오싹함을 느낀다.`,
+      choices: [
+        { text: '가까이 다가가 확인해본다', lean: 'risky' },
+        { text: '다른 길로 돌아간다', lean: 'safe' },
+        { text: '못 본 척 서둘러 다리를 건넌다', lean: 'neutral' },
+      ],
+    },
 
     // OUTDOOR × comedy
     {
@@ -301,6 +334,17 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
         { text: '끝까지 아니라고 해명한다', lean: 'neutral' },
         { text: '그냥 맞장구쳐 준다', lean: 'safe' },
         { text: '재미 삼아 더 얘기를 부풀린다', lean: 'risky' },
+      ],
+    },
+    {
+      id: 'od-comedy-4',
+      mode: 'outdoor',
+      category: 'comedy',
+      situation: `${pick(TIME_MOODS)}, ${name}${이가} 신고 있던 신발 한 짝이 진창에 빠져 벗겨진다. 하필 지나가던 사람들이 다 보고 있었다.`,
+      choices: [
+        { text: '태연한 척 마저 걸어간다', lean: 'safe' },
+        { text: '웃으며 창피함을 인정한다', lean: 'neutral' },
+        { text: '신발을 되찾으려 진창에 뛰어든다', lean: 'risky' },
       ],
     },
 
@@ -407,6 +451,17 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
         { text: '이웃에게 빌려서라도 채운다', lean: 'risky' },
       ],
     },
+    {
+      id: 'sh-social-4',
+      mode: 'shelter',
+      category: 'social',
+      situation: `${pick(TIME_MOODS)}, 옆집에서 다투는 소리가 벽 너머로 크게 들려온다. ${name}${은는} 괜히 신경이 쓰인다.`,
+      choices: [
+        { text: '무슨 일인지 살펴보러 간다', lean: 'risky' },
+        { text: '나중에 넌지시 안부를 물어본다', lean: 'neutral' },
+        { text: '못 들은 척 자기 할 일을 한다', lean: 'safe' },
+      ],
+    },
 
     // SHELTER × mystery
     {
@@ -441,6 +496,17 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
         { text: '집 안을 샅샅이 살펴본다', lean: 'risky' },
         { text: '꿈이었으려니 하고 넘긴다', lean: 'safe' },
         { text: '문단속을 다시 확인한다', lean: 'neutral' },
+      ],
+    },
+    {
+      id: 'sh-mystery-4',
+      mode: 'shelter',
+      category: 'mystery',
+      situation: `아침에 일어나 보니 어제 분명히 정리해둔 물건들이 조금씩 흐트러져 있다. ${name}${은는} 누가 다녀간 건 아닌지 께름칙하다.`,
+      choices: [
+        { text: '없어진 게 있는지 꼼꼼히 확인한다', lean: 'neutral' },
+        { text: '이웃에게 넌지시 물어본다', lean: 'risky' },
+        { text: '문단속을 더 철저히 한다', lean: 'safe' },
       ],
     },
 
@@ -561,6 +627,28 @@ export function buildSituationSeeds(ctx: SeedContext): SituationSeed[] {
         { text: '차를 대접하며 이야기를 나눈다', lean: 'neutral' },
         { text: '넌지시 마음을 떠본다', lean: 'risky' },
         { text: '적당히 예의만 차리고 만다', lean: 'safe' },
+      ],
+    },
+    {
+      id: 'sh-bond-3',
+      mode: 'shelter',
+      category: 'bond',
+      situation: `${pick(TIME_MOODS)}, 함께 지내는 이가 별다른 말도 없이 ${name}의 몫까지 넉넉히 저녁을 챙겨둔다. 사소하지만 마음이 따뜻해진다.`,
+      choices: [
+        { text: '고맙다고 솔직히 표현한다', lean: 'risky' },
+        { text: '내색하지 않고 지켜본다', lean: 'neutral' },
+        { text: '어색해서 못 본 척 넘어간다', lean: 'safe' },
+      ],
+    },
+    {
+      id: 'sh-bond-4',
+      mode: 'shelter',
+      category: 'bond',
+      situation: `거처를 함께 쓰는 이가 요즘 부쩍 ${name}의 안색을 살핀다. 별일 아니라고 해도 걱정스러운 눈치를 거두지 않는다.`,
+      choices: [
+        { text: '속마음을 털어놓는다', lean: 'risky' },
+        { text: '괜찮다고 안심시킨다', lean: 'safe' },
+        { text: '그 마음이 고마워 조용히 웃는다', lean: 'neutral' },
       ],
     },
 

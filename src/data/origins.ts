@@ -44,7 +44,7 @@ export const REGIONS: RegionDef[] = [
     label: '서양풍 봉건국가',
     description: '영주와 기사, 농노가 얽힌 봉건 질서. 잦은 소규모 전쟁이 배경에 깔려 있다.',
     statTendency: { STR: 1, AGI: 1 },
-    jobIds: ['squire', 'farmhand', 'mason', 'soldier', 'blacksmith'],
+    jobIds: ['squire', 'farmhand', 'mason', 'knight', 'troubadour'],
   },
 ];
 
