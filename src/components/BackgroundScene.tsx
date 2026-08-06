@@ -34,6 +34,21 @@ const BACKGROUND_IMAGES: Record<SceneTag, number> = {
   field: require('../../assets/backgrounds/field.png'),
   well: require('../../assets/backgrounds/well.png'),
   square: require('../../assets/backgrounds/square.png'),
+  inn: require('../../assets/backgrounds/inn.png'),
+  stable: require('../../assets/backgrounds/stable.png'),
+  forge: require('../../assets/backgrounds/forge.png'),
+  mill: require('../../assets/backgrounds/mill.png'),
+  bakery: require('../../assets/backgrounds/bakery.png'),
+  brewery: require('../../assets/backgrounds/brewery.png'),
+  bridge: require('../../assets/backgrounds/bridge.png'),
+  gate: require('../../assets/backgrounds/gate.png'),
+  riverside: require('../../assets/backgrounds/riverside.png'),
+  hill: require('../../assets/backgrounds/hill.png'),
+  cave: require('../../assets/backgrounds/cave.png'),
+  waterfall: require('../../assets/backgrounds/waterfall.png'),
+  grassland: require('../../assets/backgrounds/grassland.png'),
+  swamp: require('../../assets/backgrounds/swamp.png'),
+  graveyard: require('../../assets/backgrounds/graveyard.png'),
 };
 
 /**

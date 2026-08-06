@@ -14,7 +14,22 @@ export type SceneTag =
   | 'dock'
   | 'field'
   | 'well'
-  | 'square';
+  | 'square'
+  | 'inn'
+  | 'stable'
+  | 'forge'
+  | 'mill'
+  | 'bakery'
+  | 'brewery'
+  | 'bridge'
+  | 'gate'
+  | 'riverside'
+  | 'hill'
+  | 'cave'
+  | 'waterfall'
+  | 'grassland'
+  | 'swamp'
+  | 'graveyard';
 
 export interface SceneTheme {
   tag: SceneTag;
@@ -103,6 +118,81 @@ export const SCENE_THEMES: Record<SceneTag, SceneTheme> = {
     label: '광장',
     gradient: ['#3a3226', '#78694c'],
   },
+  inn: {
+    tag: 'inn',
+    label: '여관/술집',
+    gradient: ['#3a2a18', '#7a5530'],
+  },
+  stable: {
+    tag: 'stable',
+    label: '외양간/마구간',
+    gradient: ['#332c1a', '#6e5c34'],
+  },
+  forge: {
+    tag: 'forge',
+    label: '대장간',
+    gradient: ['#241a14', '#8a4420'],
+  },
+  mill: {
+    tag: 'mill',
+    label: '방앗간',
+    gradient: ['#3a3226', '#7a6a4a'],
+  },
+  bakery: {
+    tag: 'bakery',
+    label: '빵집/제과점',
+    gradient: ['#3a2a1a', '#8a5c34'],
+  },
+  brewery: {
+    tag: 'brewery',
+    label: '양조장/술도가',
+    gradient: ['#2e2414', '#6e4a22'],
+  },
+  bridge: {
+    tag: 'bridge',
+    label: '다리',
+    gradient: ['#242e34', '#4a6058'],
+  },
+  gate: {
+    tag: 'gate',
+    label: '성문/관문',
+    gradient: ['#2e2a26', '#5c5248'],
+  },
+  riverside: {
+    tag: 'riverside',
+    label: '강가/개울',
+    gradient: ['#1e3234', '#3c6260'],
+  },
+  hill: {
+    tag: 'hill',
+    label: '언덕/구릉',
+    gradient: ['#28322a', '#5a6e5c'],
+  },
+  cave: {
+    tag: 'cave',
+    label: '동굴',
+    gradient: ['#202224', '#454a4e'],
+  },
+  waterfall: {
+    tag: 'waterfall',
+    label: '폭포',
+    gradient: ['#1a2e28', '#3c645c'],
+  },
+  grassland: {
+    tag: 'grassland',
+    label: '초원/들판',
+    gradient: ['#2e3220', '#6a7a44'],
+  },
+  swamp: {
+    tag: 'swamp',
+    label: '습지/늪',
+    gradient: ['#242a1e', '#4a5238'],
+  },
+  graveyard: {
+    tag: 'graveyard',
+    label: '묘지',
+    gradient: ['#2a2c28', '#525850'],
+  },
 };
 
 const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
@@ -126,13 +216,32 @@ const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
   { tag: 'field', keywords: ['밭', '농경지', '경작지'] },
   { tag: 'well', keywords: ['우물'] },
   { tag: 'square', keywords: ['광장'] },
+  // Phase 11(2026-08-06): 마을/자연/상황 장소 15종 추가. '여관'/'술집'은 기존에 각각 indoor/
+  // social 키워드에 들어 있었는데, 전용 배경이 생겼으니 그쪽에서 빼고 여기로 옮긴다.
+  { tag: 'inn', keywords: ['여관', '술집', '주막', '선술집'] },
+  { tag: 'stable', keywords: ['외양간', '마구간'] },
+  { tag: 'forge', keywords: ['대장간'] },
+  { tag: 'mill', keywords: ['방앗간', '물레방아'] },
+  { tag: 'bakery', keywords: ['빵집', '제과점'] },
+  { tag: 'brewery', keywords: ['양조장', '술도가'] },
+  // '다리'는 신체 부위(다리를 다쳤다)와 겹치는 흔한 단어라, '나무 상자' 사고와 같은 종류의
+  // 오탐을 피하려고 다리(교량)일 때만 쓰는 구체적인 구절로 한정한다.
+  { tag: 'bridge', keywords: ['다리를 건너', '다리 위', '돌다리', '나무다리', '구름다리'] },
+  { tag: 'gate', keywords: ['성문', '관문'] },
+  { tag: 'riverside', keywords: ['강가', '개울', '시냇가'] },
+  { tag: 'hill', keywords: ['언덕', '구릉'] },
+  { tag: 'cave', keywords: ['동굴'] },
+  { tag: 'waterfall', keywords: ['폭포'] },
+  { tag: 'grassland', keywords: ['초원', '들판'] },
+  { tag: 'swamp', keywords: ['습지', '늪'] },
+  { tag: 'graveyard', keywords: ['묘지', '무덤'] },
   // '피'/'적' 같은 한 글자 키워드는 '피하다'/'규칙적'처럼 무관한 흔한 단어에도 부분 문자열로
   // 걸려 오탐이 잦아('규칙적이다'가 'danger'로 잘못 분류되는 식) 더 구체적인 복합어로 대체.
   { tag: 'danger', keywords: ['위험', '위협', '매복', '강도', '흉기', '핏자국', '피투성이', '유혈', '싸움', '칼', '화살', '습격', '도적', '산적', '돌연변이', '비명'] },
   { tag: 'forest', keywords: ['숲', '수풀', '덤불', '사냥', '산속', '산길', '야생'] },
   { tag: 'market', keywords: ['시장', '장터', '좌판', '저잣거리', '상인', '가판', '노점', '흥정', '교역'] },
-  { tag: 'social', keywords: ['잔치', '연회', '대화', '만남', '모임', '축제', '술집'] },
-  { tag: 'indoor', keywords: ['방', '집', '거처', '관사', '숙소', '여관', '실내', '오두막', '침대'] },
+  { tag: 'social', keywords: ['잔치', '연회', '대화', '만남', '모임', '축제'] },
+  { tag: 'indoor', keywords: ['방', '집', '거처', '관사', '숙소', '실내', '오두막', '침대'] },
 ];
 
 /**
