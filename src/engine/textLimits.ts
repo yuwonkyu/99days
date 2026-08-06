@@ -5,12 +5,16 @@ import { AITurnResponse } from '../types/game';
  * (or offline generator) doesn't always honor a requested character count.
  * situation/outcome are read through the page-by-page UI (see paginate()
  * below) instead of being truncated, so nothing the AI wrote is ever lost.
- * choice/day_summary still live in single-line UI (a button, a one-line
- * return-summary banner) and stay hard-capped.
+ * choice stays hard-capped at button-label length. day_summary used to be
+ * capped just as tight (30) on the assumption it only ever lives in a
+ * one-line label, but ReturningSummaryBanner actually wraps it across
+ * multiple lines with no line limit — the tight cap was cutting real content
+ * off mid-sentence ("...받다....") for no layout reason, reading as
+ * unfinished rather than summarized. Loosened to fit ~2 sentences.
  */
 const LIMITS = {
   choice: 25,
-  daySummary: 30,
+  daySummary: 120,
   threadSummary: 40,
 };
 

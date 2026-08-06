@@ -25,7 +25,7 @@ const SYSTEM_PROMPT = `당신은 텍스트 기반 생존 성장 시뮬레이션 
 3. situation(오늘의 상황, 2~4문장 150자 이내)은 outcome에서 자연스럽게 이어지는 오늘의 도입부로 작성 — 맥락 없는 별개 사건으로 갑자기 전환하지 말 것
 4. 선택지 2~4개 제시 (각 25자 이내, 자유행동 여지도 허용)
 5. 스탯 반영, 과도하게 유리한 결과 금지
-6. day_summary는 30자 이내 한 줄 요약
+6. day_summary는 60자 내외 한 문장 요약 — 나중에 돌아왔을 때 그날 무슨 일이었는지 알아볼 수 있을 정도로, 문장 중간에 끊기지 않게
 
 [생성 후 자가 검증 체크리스트]
 - 세계관 위반 없는가?
@@ -96,7 +96,7 @@ const TOOL_SCHEMA = {
           AGE: { type: 'number', description: 'storyDirective.timeSkip이 큰 폭일 때만 정수로 반영' },
         },
       },
-      day_summary: { type: 'string', description: '30자 이내, 복귀 시 요약용 한 줄' },
+      day_summary: { type: 'string', description: '60자 내외, 복귀 시 요약용 한 문장 — 문장 중간에 끊기지 않게' },
       thread: {
         type: 'object',
         properties: {
