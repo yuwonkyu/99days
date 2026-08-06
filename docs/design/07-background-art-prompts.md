@@ -329,3 +329,23 @@ office:        plain pre-industrial government hall interior, worn wooden desks 
 - [x] Phase 6.6: 정적 QA 감사(2026-08-04) — `buildSituationSeeds()`를 직접 실행해 40개 시드 전부(각 30회 샘플링)를 `inferSceneTag`/`inferMood`에 통과시켜 태그 분포를 전수 확인. `sh-*`(거처 모드) 18개 시드 전부가 "방"/"집" 같은 키워드 없이도 `city` 기본값으로 떨어지고 있던 걸 발견 — `inferSceneTag`에 `sceneMode` 힌트를 추가해 키워드가 하나도 안 걸렸을 때 `sceneMode === 'shelter'`면 `city` 대신 `indoor`로 폴백하게 함([GameScreen.tsx](../../src/screens/GameScreen.tsx)가 `gameState.recentSceneModes`의 마지막 값을 넘겨줌). 부수 효과로 `sh-work-2`/`sh-horror-2`가 각각 `city_sorrow`/`city_fear` 대신 이미 실제 아트가 있는 `indoor_sorrow`/`indoor_fear`로 이동 — `city_sorrow.png`는 이제 오프라인 시드 중 쓰는 게 없어 대기 상태(AI 생성 콘텐츠용으로는 여전히 유효). `od-danger-1`("산길")에도 `forest` 키워드 `산길` 추가
 - [ ] 조합이 늘어날 때마다 이 문서의 우선순위 표도 함께 갱신
 - [x] Phase 7: `office`(관공서/청사) 태그 추가(2026-08-06, 실플레이 스크린샷 제보) — `SceneTag`/`SCENE_THEMES`/`KEYWORD_TAGS`/`BackgroundScene.tsx` 갱신, 프롬프트 확정. `inferSceneTag`가 화면에 보이는 페이지가 아니라 situation 전체 원문을 검사한다는 것도 함께 확인(여러 페이지짜리 situation에서 앞쪽 문장의 장소 키워드가 우선 매칭될 수 있음) — `office.png`는 아직 자리표시자, 실제 아트 제작 필요
+- [x] Phase 8: 홈 화면 배경 추가 + 사운드 토글 단순화(2026-08-06, 사용자 요청)
+  - `SoundToggleButton.tsx`: `-`/`+` 볼륨 스텝 버튼과 퍼센트 표시를 없애고 🔊/🔈 단일 토글 버튼으로 교체. `audioContext.tsx`/`settingsStore.ts`에서 `volume`/`increaseVolume`/`decreaseVolume`/`loadSoundVolume`/`saveSoundVolume` 제거 — BGM은 `DEFAULT_VOLUME`(0.35) 고정, on/off만 남음. 홈 화면·게임 화면 양쪽에서 브라우저로 토글 동작 확인
+  - `HomeScreen.tsx`: `BackgroundScene`과 같은 패턴(자리표시자 PNG + 실제 아트로 같은 파일명 덮어쓰기)으로 배경 이미지 추가. 게임 내 배경과 달리 상황별 태그가 필요 없는 고정 이미지라 별도 맵 없이 바로 `require('../../assets/backgrounds/home.png')`. 글자가 이미지 위에서도 읽히도록 위→아래로 짙어지는 그라디언트 스크림을 얹고, 제목/부제에 텍스트 섀도우 추가
+  - `home.png` 프롬프트:
+    ```
+    painterly illustration, pre-industrial fantasy setting, muted natural palette, no magic effects, no sci-fi elements, no modern technology.
+    wide atmospheric view of a modest pre-industrial village and countryside at dawn, seen from a
+    slightly elevated hillside vantage point, a quiet dirt path winding from the foreground down
+    toward scattered rooftops and distant hills, soft golden morning light breaking through low
+    mist, calm and quietly hopeful mood suggesting a long journey ahead, muted warm dawn palette
+    with cool shadow tones.
+    vertical portrait composition, 9:16 aspect ratio, open sky and negative space in the upper
+    third for title text to sit over.
+    no text, no watermark, no modern clothing, no futuristic elements, no visible characters or
+    figures close to camera.
+    ```
+    다른 배경과 달리 위쪽 1/3에 제목이 얹히므로 인물/복잡한 디테일 없이 하늘·원경 위주로 비워두라는
+    지시를 넣었다. 코드에서 이미 그라디언트 스크림으로 글자 가독성을 보정하므로 이미지 자체의
+    명암 대비는 너무 강하지 않아도 됨. `home.png` 실제 아트 제작 완료(2026-08-06 확인, 768×1376
+    정상 로드) — `office.png`/`stairs.png`/`alley.png`는 여전히 1x1 투명 PNG 자리표시자

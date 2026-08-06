@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { loadGameState, clearGameState } from '../engine/gameStateStore';
 import { TOTAL_DAYS } from '../types/game';
 import { useAudio } from '../engine/audioContext';
 import SoundToggleButton from '../components/SoundToggleButton';
+
+/**
+ * Doc 07 패턴 재사용: 자리표시자(1x1 투명 PNG)를 실제 아트로 같은 파일명으로 덮어쓰면
+ * 코드 변경 없이 반영된다. 게임 내 배경(BackgroundScene)과 달리 상황별 태그가 필요 없는
+ * 고정 이미지 한 장이라 별도 맵 없이 바로 require.
+ */
+const HOME_BACKGROUND = require('../../assets/backgrounds/home.png');
 
 interface Props {
   onContinue: () => void;
@@ -54,6 +62,13 @@ export default function HomeScreen({ onContinue, onNewGame, onRecords }: Props) 
 
   return (
     <View style={styles.container}>
+      <Image source={HOME_BACKGROUND} style={styles.background} resizeMode="cover" />
+      {/* 위쪽은 원경이 보이게 옅게, 버튼이 몰린 아래쪽은 짙게 — 이미지 위에서도 글자가 읽히도록. */}
+      <LinearGradient
+        colors={['rgba(10,12,18,0.25)', 'rgba(10,12,18,0.55)', 'rgba(10,12,18,0.88)']}
+        locations={[0, 0.45, 1]}
+        style={styles.scrim}
+      />
       <View style={styles.topBar}>
         <SoundToggleButton />
       </View>
@@ -103,11 +118,30 @@ export default function HomeScreen({ onContinue, onNewGame, onRecords }: Props) 
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#161a24' },
+  container: { flex: 1, backgroundColor: '#161a24', overflow: 'hidden' },
+  background: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
+  scrim: StyleSheet.absoluteFill,
   topBar: { flexDirection: 'row', justifyContent: 'flex-end', padding: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
-  title: { color: '#fff', fontSize: 40, fontWeight: '800', letterSpacing: 3 },
-  subtitle: { color: '#9aa2b8', fontSize: 14, marginTop: 10, marginBottom: 40, textAlign: 'center' },
+  title: {
+    color: '#fff',
+    fontSize: 40,
+    fontWeight: '800',
+    letterSpacing: 3,
+    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  subtitle: {
+    color: '#c8cdda',
+    fontSize: 14,
+    marginTop: 10,
+    marginBottom: 40,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
   menu: { width: '100%', maxWidth: 360, gap: 12 },
   primaryButton: {
     paddingVertical: 16,
