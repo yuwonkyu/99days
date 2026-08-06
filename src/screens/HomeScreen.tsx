@@ -92,19 +92,15 @@ export default function HomeScreen({ onContinue, onNewGame, onRecords }: Props) 
           </View>
         ) : (
           <View style={styles.menu}>
-            <Pressable
-              style={[styles.primaryButton, !hasSave && styles.disabledButton]}
-              onPress={handleContinue}
-              disabled={!hasSave}
-            >
-              <Text style={styles.primaryText}>이어하기</Text>
-              {hasSave && savedDay != null && (
-                <Text style={styles.primarySubText}>Day {savedDay}/{TOTAL_DAYS}</Text>
-              )}
-            </Pressable>
+            {hasSave && (
+              <Pressable style={styles.primaryButton} onPress={handleContinue}>
+                <Text style={styles.primaryText}>이어하기</Text>
+                {savedDay != null && <Text style={styles.primarySubText}>Day {savedDay}/{TOTAL_DAYS}</Text>}
+              </Pressable>
+            )}
 
-            <Pressable style={styles.secondaryButton} onPress={handleNewGamePress}>
-              <Text style={styles.secondaryText}>새로 시작</Text>
+            <Pressable style={hasSave ? styles.secondaryButton : styles.primaryButton} onPress={handleNewGamePress}>
+              <Text style={hasSave ? styles.secondaryText : styles.primaryText}>새로 시작</Text>
             </Pressable>
 
             <Pressable style={styles.textButton} onPress={handleRecords}>
@@ -149,7 +145,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8c468',
     alignItems: 'center',
   },
-  disabledButton: { opacity: 0.35 },
   primaryText: { color: '#20242f', fontSize: 16, fontWeight: '800' },
   primarySubText: { color: '#4a3f22', fontSize: 12, marginTop: 2, fontWeight: '600' },
   secondaryButton: {

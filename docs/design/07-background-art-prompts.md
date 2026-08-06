@@ -330,7 +330,8 @@ office:        plain pre-industrial government hall interior, worn wooden desks 
 - [ ] 조합이 늘어날 때마다 이 문서의 우선순위 표도 함께 갱신
 - [x] Phase 7: `office`(관공서/청사) 태그 추가(2026-08-06, 실플레이 스크린샷 제보) — `SceneTag`/`SCENE_THEMES`/`KEYWORD_TAGS`/`BackgroundScene.tsx` 갱신, 프롬프트 확정. `inferSceneTag`가 화면에 보이는 페이지가 아니라 situation 전체 원문을 검사한다는 것도 함께 확인(여러 페이지짜리 situation에서 앞쪽 문장의 장소 키워드가 우선 매칭될 수 있음). `office.png` 실제 아트 제작 완료(2026-08-06)
 - [x] Phase 9: `day_summary` 30자 하드캡이 「그동안의 이야기」복귀 배너에서 문장을 중간에 잘라버리던 문제 수정(2026-08-06, 사용자 제보) — 배너 자체는 줄바꿈 제한이 없는데 클램프만 30자로 걸려있던 것. `textLimits.ts`의 클램프를 120자로 완화하고, AI 프롬프트 지침(`promptBuilder.ts`/이 문서/`worker/src/index.ts` 3곳 — 서로 동기화 대상)도 "30자 이내 한 줄"→"60자 내외 한 문장"으로 함께 조정. **주의: `worker/src/index.ts`는 Cloudflare Worker로 별도 배포(`wrangler deploy`)해야 실제 AI 응답에 반영됨 — GitHub Pages 배포와는 별개 파이프라인, 이번엔 미실행**
-- [x] Phase 10: `warehouse`/`dock`/`field`/`well`/`square` 5종 추가(2026-08-06, 실플레이 제보) — "창고" 장면이 `forest`의 `나무` 키워드에 오탐되던 것 발견, `나무` 제거 + `창고`를 `indoor`에서 분리해 전용 태그로 승격. 코드 전체 반영, 브라우저에서 제보 장면 정상 렌더링 확인. 5장 다 자리표시자, 상세 프롬프트는 문서 끝 Phase 10 참고
+- [x] Phase 10: `warehouse`/`dock`/`field`/`well`/`square` 5종 추가(2026-08-06, 실플레이 제보) — "창고" 장면이 `forest`의 `나무` 키워드에 오탐되던 것 발견, `나무` 제거 + `창고`를 `indoor`에서 분리해 전용 태그로 승격. 코드 전체 반영, 브라우저에서 제보 장면 정상 렌더링 확인. 5장 실제 아트 제작 완료(2026-08-06)
+- [x] Phase 8.1: 홈 화면 UX(2026-08-06, 사용자 요청) — 저장 데이터가 없을 때 "이어하기" 버튼을 비활성 상태로 보여주는 대신 아예 숨기고, 이 경우 "새로 시작"이 주 버튼(강조색)으로 승격되도록 `HomeScreen.tsx` 수정
 - [x] Phase 8: 홈 화면 배경 추가 + 사운드 토글 단순화(2026-08-06, 사용자 요청)
   - `SoundToggleButton.tsx`: `-`/`+` 볼륨 스텝 버튼과 퍼센트 표시를 없애고 🔊/🔈 단일 토글 버튼으로 교체. `audioContext.tsx`/`settingsStore.ts`에서 `volume`/`increaseVolume`/`decreaseVolume`/`loadSoundVolume`/`saveSoundVolume` 제거 — BGM은 `DEFAULT_VOLUME`(0.35) 고정, on/off만 남음. 홈 화면·게임 화면 양쪽에서 브라우저로 토글 동작 확인
   - `HomeScreen.tsx`: `BackgroundScene`과 같은 패턴(자리표시자 PNG + 실제 아트로 같은 파일명 덮어쓰기)으로 배경 이미지 추가. 게임 내 배경과 달리 상황별 태그가 필요 없는 고정 이미지라 별도 맵 없이 바로 `require('../../assets/backgrounds/home.png')`. 글자가 이미지 위에서도 읽히도록 위→아래로 짙어지는 그라디언트 스크림을 얹고, 제목/부제에 텍스트 섀도우 추가
@@ -394,5 +395,4 @@ square:        open village square with a central well or stone marker, simple w
 
 공통 프리픽스/네거티브는 Phase 1과 동일. **구현 완료**: `SceneTag`/`SCENE_THEMES`/`KEYWORD_TAGS`/
 `BackgroundScene.tsx`의 `BACKGROUND_IMAGES` 전부 갱신, 브라우저에서 실플레이 제보 장면(`warehouse`)
-정상 렌더링 확인. 5장 다 아직 1x1 투명 PNG 자리표시자 — 실제 아트로 같은 파일명 덮어쓰기만 하면
-코드 변경 없이 반영됨.
+정상 렌더링 확인. 5장 모두 실제 아트 제작 완료(2026-08-06) — 이제 SceneTag 16종 전부 실제 아트 보유.
