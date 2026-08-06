@@ -29,6 +29,11 @@ const BACKGROUND_IMAGES: Record<SceneTag, number> = {
   alley: require('../../assets/backgrounds/alley.png'),
   visitation: require('../../assets/backgrounds/visitation.png'),
   office: require('../../assets/backgrounds/office.png'),
+  warehouse: require('../../assets/backgrounds/warehouse.png'),
+  dock: require('../../assets/backgrounds/dock.png'),
+  field: require('../../assets/backgrounds/field.png'),
+  well: require('../../assets/backgrounds/well.png'),
+  square: require('../../assets/backgrounds/square.png'),
 };
 
 /**

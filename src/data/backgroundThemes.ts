@@ -1,4 +1,20 @@
-export type SceneTag = 'city' | 'forest' | 'market' | 'danger' | 'social' | 'indoor' | 'cell' | 'stairs' | 'alley' | 'visitation' | 'office';
+export type SceneTag =
+  | 'city'
+  | 'forest'
+  | 'market'
+  | 'danger'
+  | 'social'
+  | 'indoor'
+  | 'cell'
+  | 'stairs'
+  | 'alley'
+  | 'visitation'
+  | 'office'
+  | 'warehouse'
+  | 'dock'
+  | 'field'
+  | 'well'
+  | 'square';
 
 export interface SceneTheme {
   tag: SceneTag;
@@ -62,6 +78,31 @@ export const SCENE_THEMES: Record<SceneTag, SceneTheme> = {
     label: '관공서',
     gradient: ['#2e3038', '#565c68'],
   },
+  warehouse: {
+    tag: 'warehouse',
+    label: '창고',
+    gradient: ['#2a2620', '#524a3a'],
+  },
+  dock: {
+    tag: 'dock',
+    label: '부두',
+    gradient: ['#22323a', '#4a6470'],
+  },
+  field: {
+    tag: 'field',
+    label: '밭',
+    gradient: ['#33321e', '#6a6a3c'],
+  },
+  well: {
+    tag: 'well',
+    label: '우물가',
+    gradient: ['#30302c', '#5e5e54'],
+  },
+  square: {
+    tag: 'square',
+    label: '광장',
+    gradient: ['#3a3226', '#78694c'],
+  },
 };
 
 const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
@@ -75,13 +116,23 @@ const KEYWORD_TAGS: Array<{ tag: SceneTag; keywords: string[] }> = [
   // 장소 키워드(청사/관아 등)가 danger/forest보다 뒤에 있어서, situation 앞부분에 숲/산길
   // 묘사가 섞여 있으면 그쪽이 먼저 걸렸기 때문. 다른 장소 특정 키워드들과 같은 우선순위로 올림.
   { tag: 'office', keywords: ['청사', '관아', '관청', '관공서', '집무실', '서무'] },
+  // 실플레이 제보(2026-08-06): "창고 안은 깜깜했다... 나무 상자들"이 forest로 잘못 표시됨 —
+  // 원인은 forest의 '나무' 한 글자 키워드가 "나무 상자"/"나무 문"처럼 목재 재질을 가리키는
+  // (숲과 무관한) 흔한 표현에도 걸렸기 때문. '나무' 제거하고(숲/수풀/덤불/산속/산길/야생으로도
+  // 충분히 커버됨), '창고'는 indoor에서 분리해 전용 태그로 승격 — 아늑한 거처와 어수선한
+  // 창고는 그림도 달라야 자연스럽다.
+  { tag: 'warehouse', keywords: ['창고', '곳간'] },
+  { tag: 'dock', keywords: ['부두', '선착장', '나루터', '항구'] },
+  { tag: 'field', keywords: ['밭', '농경지', '경작지'] },
+  { tag: 'well', keywords: ['우물'] },
+  { tag: 'square', keywords: ['광장'] },
   // '피'/'적' 같은 한 글자 키워드는 '피하다'/'규칙적'처럼 무관한 흔한 단어에도 부분 문자열로
   // 걸려 오탐이 잦아('규칙적이다'가 'danger'로 잘못 분류되는 식) 더 구체적인 복합어로 대체.
   { tag: 'danger', keywords: ['위험', '위협', '매복', '강도', '흉기', '핏자국', '피투성이', '유혈', '싸움', '칼', '화살', '습격', '도적', '산적', '돌연변이', '비명'] },
-  { tag: 'forest', keywords: ['숲', '나무', '수풀', '덤불', '사냥', '산속', '산길', '야생'] },
+  { tag: 'forest', keywords: ['숲', '수풀', '덤불', '사냥', '산속', '산길', '야생'] },
   { tag: 'market', keywords: ['시장', '장터', '좌판', '저잣거리', '상인', '가판', '노점', '흥정', '교역'] },
   { tag: 'social', keywords: ['잔치', '연회', '대화', '만남', '모임', '축제', '술집'] },
-  { tag: 'indoor', keywords: ['방', '집', '거처', '관사', '숙소', '여관', '실내', '오두막', '창고', '침대'] },
+  { tag: 'indoor', keywords: ['방', '집', '거처', '관사', '숙소', '여관', '실내', '오두막', '침대'] },
 ];
 
 /**

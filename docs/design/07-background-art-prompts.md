@@ -330,6 +330,7 @@ office:        plain pre-industrial government hall interior, worn wooden desks 
 - [ ] 조합이 늘어날 때마다 이 문서의 우선순위 표도 함께 갱신
 - [x] Phase 7: `office`(관공서/청사) 태그 추가(2026-08-06, 실플레이 스크린샷 제보) — `SceneTag`/`SCENE_THEMES`/`KEYWORD_TAGS`/`BackgroundScene.tsx` 갱신, 프롬프트 확정. `inferSceneTag`가 화면에 보이는 페이지가 아니라 situation 전체 원문을 검사한다는 것도 함께 확인(여러 페이지짜리 situation에서 앞쪽 문장의 장소 키워드가 우선 매칭될 수 있음). `office.png` 실제 아트 제작 완료(2026-08-06)
 - [x] Phase 9: `day_summary` 30자 하드캡이 「그동안의 이야기」복귀 배너에서 문장을 중간에 잘라버리던 문제 수정(2026-08-06, 사용자 제보) — 배너 자체는 줄바꿈 제한이 없는데 클램프만 30자로 걸려있던 것. `textLimits.ts`의 클램프를 120자로 완화하고, AI 프롬프트 지침(`promptBuilder.ts`/이 문서/`worker/src/index.ts` 3곳 — 서로 동기화 대상)도 "30자 이내 한 줄"→"60자 내외 한 문장"으로 함께 조정. **주의: `worker/src/index.ts`는 Cloudflare Worker로 별도 배포(`wrangler deploy`)해야 실제 AI 응답에 반영됨 — GitHub Pages 배포와는 별개 파이프라인, 이번엔 미실행**
+- [x] Phase 10: `warehouse`/`dock`/`field`/`well`/`square` 5종 추가(2026-08-06, 실플레이 제보) — "창고" 장면이 `forest`의 `나무` 키워드에 오탐되던 것 발견, `나무` 제거 + `창고`를 `indoor`에서 분리해 전용 태그로 승격. 코드 전체 반영, 브라우저에서 제보 장면 정상 렌더링 확인. 5장 다 자리표시자, 상세 프롬프트는 문서 끝 Phase 10 참고
 - [x] Phase 8: 홈 화면 배경 추가 + 사운드 토글 단순화(2026-08-06, 사용자 요청)
   - `SoundToggleButton.tsx`: `-`/`+` 볼륨 스텝 버튼과 퍼센트 표시를 없애고 🔊/🔈 단일 토글 버튼으로 교체. `audioContext.tsx`/`settingsStore.ts`에서 `volume`/`increaseVolume`/`decreaseVolume`/`loadSoundVolume`/`saveSoundVolume` 제거 — BGM은 `DEFAULT_VOLUME`(0.35) 고정, on/off만 남음. 홈 화면·게임 화면 양쪽에서 브라우저로 토글 동작 확인
   - `HomeScreen.tsx`: `BackgroundScene`과 같은 패턴(자리표시자 PNG + 실제 아트로 같은 파일명 덮어쓰기)으로 배경 이미지 추가. 게임 내 배경과 달리 상황별 태그가 필요 없는 고정 이미지라 별도 맵 없이 바로 `require('../../assets/backgrounds/home.png')`. 글자가 이미지 위에서도 읽히도록 위→아래로 짙어지는 그라디언트 스크림을 얹고, 제목/부제에 텍스트 섀도우 추가
@@ -351,3 +352,47 @@ office:        plain pre-industrial government hall interior, worn wooden desks 
     명암 대비는 너무 강하지 않아도 됨. `home.png` 실제 아트 제작 완료(2026-08-06 확인, 768×1376
     정상 로드). `office.png`/`stairs.png`/`alley.png`도 2026-08-06에 실제 아트로 교체 완료 —
     이제 SceneTag 11종 전부 실제 아트 보유
+
+### Phase 10 — 세분화 5종 추가: 창고/부두/밭/우물가/광장 (2026-08-06, 실플레이 제보)
+
+`창고 안은 깜깜했다... 나무 상자들, 곡식 자루들`이 `forest` 배경으로 잘못 표시되는 걸 발견 —
+원인은 `forest`의 `나무` 한 글자 키워드가 "나무 상자"/"나무 문" 같은 목재 재질 표현(숲과 무관)에도
+걸렸기 때문. `나무` 제거(숲/수풀/덤불/산속/산길/야생으로 충분히 커버), `창고`는 `indoor`에서
+분리해 전용 태그로 승격하고, 같은 김에 자주 나올 법한 장소 4개를 더 추가했다: 부두(뱃사공 직업·
+강 중심 상업 도시 지역과 잘 맞음), 밭, 우물가, 광장.
+
+| 파일명 | SceneTag | 키워드 | 상황 예시 |
+|---|---|---|---|
+| `warehouse.png` | warehouse | 창고/곳간 | 어두운 창고 안, 상자와 자루가 쌓인 곳 |
+| `dock.png` | dock | 부두/선착장/나루터/항구 | 강가 나루터에서 배를 타거나 짐을 옮기는 장면 |
+| `field.png` | field | 밭/농경지/경작지 | 밭일, 농사 관련 일상 |
+| `well.png` | well | 우물 | 우물가에서 물을 긷거나 사람과 마주치는 장면 |
+| `square.png` | square | 광장 | 마을 광장에서의 모임·소란 |
+
+```
+warehouse:     dim cluttered storage room, wooden crates and grain sacks stacked in deep
+               shadow, a single narrow slit of light cutting across dust-filled air, cramped
+               and slightly ominous atmosphere, muted brown and grey tones
+
+dock:          wooden river dock jutting into calm water, moored rowboats and coiled rope,
+               stacked cargo crates along the planks, overcast river-mist light, quiet
+               workaday atmosphere, muted blue-grey and weathered wood tones
+
+field:         open farmland with furrowed rows of crops stretching toward a distant tree
+               line, a low wooden fence at the edge, wide flat horizon composition, calm
+               unhurried agrarian mood, warm earthy green-brown tones
+
+well:          a worn stone well at a modest village crossroads, a wooden bucket and coiled
+               rope resting on the rim, packed dirt ground, quiet unhurried daily-life mood,
+               soft midday light, muted stone-grey and warm dust tones
+
+square:        open village square with a central well or stone marker, simple wooden
+               benches and market stalls around the perimeter, small groups of villagers
+               implied at the edges, lively but grounded public gathering mood, warm
+               daylight, muted ochre and stone tones
+```
+
+공통 프리픽스/네거티브는 Phase 1과 동일. **구현 완료**: `SceneTag`/`SCENE_THEMES`/`KEYWORD_TAGS`/
+`BackgroundScene.tsx`의 `BACKGROUND_IMAGES` 전부 갱신, 브라우저에서 실플레이 제보 장면(`warehouse`)
+정상 렌더링 확인. 5장 다 아직 1x1 투명 PNG 자리표시자 — 실제 아트로 같은 파일명 덮어쓰기만 하면
+코드 변경 없이 반영됨.
